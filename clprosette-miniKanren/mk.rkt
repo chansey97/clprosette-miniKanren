@@ -399,10 +399,10 @@
 (define mplus
   (lambda (c-inf f)
     (case-inf c-inf
-              (() (f))
-              ((f^) (inc (mplus (f) f^)))
-              ((c) (choice c f))
-              ((c f^) (choice c (inc (mplus (f) f^)))))))
+      (() (f))
+      ((f^) (inc (mplus (f) f^)))
+      ((c) (choice c f))
+      ((c f^) (choice c (inc (mplus (f) f^)))))))
 
 ; c-inf: SearchStream
 ;     g: Goal
@@ -410,10 +410,10 @@
 (define bind
   (lambda (c-inf g)
     (case-inf c-inf
-              (() (mzero))
-              ((f) (inc (bind (f) g)))
-              ((c) (g c))
-              ((c f) (mplus (g c) (inc (bind (f) g)))))))
+      (() (mzero))
+      ((f) (inc (bind (f) g)))
+      ((c) (g c))
+      ((c f) (mplus (g c) (inc (bind (f) g)))))))
 
 ; Int, SearchStream -> (ListOf SearchResult)
 (define take
@@ -422,11 +422,11 @@
       ((and n (zero? n)) '())
       (else
        (case-inf (f)
-                 (() '())
-                 ((f) (take n f))
-                 ((c) (cons c '()))
-                 ((c f) (cons c
-                          (take (and n (- n 1)) f))))))))
+         (() '())
+         ((f) (take n f))
+         ((c) (cons c '()))
+         ((c f) (cons c
+                  (take (and n (- n 1)) f))))))))
 
 ; -> SearchStream
 (define-syntax bind*
@@ -446,11 +446,11 @@
   (syntax-rules ()
     ((_ (x ...) g0 g ...)
      (lambdag@ (st)
-               ; this inc triggers interleaving
-               (inc
-                (let ((scope (subst-scope (state-S st))))
-                  (let* ((x (var scope)) ...)
-                    (bind* (g0 st) g ...))))))))
+       ; this inc triggers interleaving
+       (inc
+        (let ((scope (subst-scope (state-S st))))
+          (let* ((x (var scope)) ...)
+            (bind* (g0 st) g ...))))))))
 
 
 ; -> Goal
@@ -458,12 +458,12 @@
   (syntax-rules ()
     ((_ (g0 g ...) (g1 g^ ...) ...)
      (lambdag@ (st)
-               ; this inc triggers interleaving
-               (inc
-                (let ((st (state-with-scope st (new-scope))))
-                  (mplus*
-                   (bind* (g0 st) g ...)
-                   (bind* (g1 st) g^ ...) ...)))))))
+       ; this inc triggers interleaving
+       (inc
+        (let ((st (state-with-scope st (new-scope))))
+          (mplus*
+           (bind* (g0 st) g ...)
+           (bind* (g1 st) g^ ...) ...)))))))
 
 (define-syntax run
   (syntax-rules ()
@@ -475,15 +475,15 @@
              (inc
               ((fresh (q) g0 g ... z/purge
                       (lambdag@ (st)
-                                (let ((st (state-with-scope st nonlocal-scope)))
-                                  (let ((z ((reify q) st)))
-                                    (choice z (lambda () (lambda () #f)))))))
+                        (let ((st (state-with-scope st nonlocal-scope)))
+                          (let ((z ((reify q) st)))
+                            (choice z (lambda () (lambda () #f)))))))
                empty-state)))))
     ((_ n (q0 q1 q ...) g0 g ...)
      (run n (x)
-          (fresh (q0 q1 q ...)
-                 g0 g ...
-                 (== `(,q0 ,q1 ,q ...) x))))))
+       (fresh (q0 q1 q ...)
+         g0 g ...
+         (== `(,q0 ,q1 ,q ...) x))))))
 
 (define-syntax run*
   (syntax-rules ()
@@ -509,29 +509,29 @@
   (lambda (type-pred type-id)
     (lambda (u)
       (lambdag@ (st)
-                (let ((term (walk u (state-S st))))
+        (let ((term (walk u (state-S st))))
+          (cond
+            ((type-pred term) st)
+            ((var? term)
+             (let* ((c (lookup-c term st))
+                    (T (c-T c))
+                    (M (c-M c)))
+               (cond
+                 ((not M)
                   (cond
-                    ((type-pred term) st)
-                    ((var? term)
-                     (let* ((c (lookup-c term st))
-                            (T (c-T c))
-                            (M (c-M c)))
-                       (cond
-                         ((not M)
-                          (cond
-                            ((eq? T type-id) st) 
-                            ((not T) (set-c term (c-with-T c type-id) st)) ; T=#f
-                            (else #f) ; T != with typeid
-                            ))
-                         ((or (eq? M 'Int) (eq? M 'Real))
-                          (cond
-                            ((eq? T 'numbero) st) ; T = numbero
-                            ((and (not T) (eq? 'numbero type-id)) ; T = #f and type-id = numbero
-                             (set-c term (c-with-T c type-id) st))
-                            (else #f) ; T != 'numbero or type-id != numbero
-                            ))
-                         (else #f))))
-                    (else #f)))))))
+                    ((eq? T type-id) st) 
+                    ((not T) (set-c term (c-with-T c type-id) st)) ; T=#f
+                    (else #f) ; T != with typeid
+                    ))
+                 ((or (eq? M 'Int) (eq? M 'Real))
+                  (cond
+                    ((eq? T 'numbero) st) ; T = numbero
+                    ((and (not T) (eq? 'numbero type-id)) ; T = #f and type-id = numbero
+                     (set-c term (c-with-T c type-id) st))
+                    (else #f) ; T != 'numbero or type-id != numbero
+                    ))
+                 (else #f))))
+            (else #f)))))))
 
 (define symbolo (type-constraint symbol? 'symbolo))
 (define numbero (type-constraint number? 'numbero))
@@ -545,25 +545,25 @@
 (define =/=*
   (lambda (S+)
     (lambdag@ (st)
-              (let-values (((S added) (unify* S+ (subst-with-scope
-                                                  (state-S st)
-                                                  nonlocal-scope))))
-                (cond
-                  ((not S) st)
-                  ((null? added) #f)
-                  (else
-                   (let ((st ((add-smt-disequality (list added)) st)))
-                     (if st
-                         ; Attach =/= constraint to all the disequality elements,
-                         ; Because these =/= constraints are potential SMT assertion.
-                         (foldl (lambda (el st)
-                                  (let ((st (add-to-D st (car el) added)))
-                                    (if (var? (cdr el))
-                                        (add-to-D st (cdr el) added)
-                                        st)))
-                                st added)
-                         #f))
-                   ))))))
+      (let-values (((S added) (unify* S+ (subst-with-scope
+                                          (state-S st)
+                                          nonlocal-scope))))
+        (cond
+          ((not S) st)
+          ((null? added) #f)
+          (else
+           (let ((st ((add-smt-disequality (list added)) st)))
+             (if st
+                 ; Attach =/= constraint to all the disequality elements,
+                 ; Because these =/= constraints are potential SMT assertion.
+                 (foldl (lambda (el st)
+                          (let ((st (add-to-D st (car el) added)))
+                            (if (var? (cdr el))
+                                (add-to-D st (cdr el) added)
+                                st)))
+                        st added)
+                 #f))
+           ))))))
 
 (define =/=
   (lambda (u v)
@@ -574,24 +574,24 @@
 (define absento
   (lambda (term1 term2)
     (lambdag@ (st)
-              (let ((state (state-S st)))
-                (let ((term1 (walk term1 state))
-                      (term2 (walk term2 state)))
-                  (let ((st ((=/= term1 term2) st)))
-                    (if st
-                        (cond
-                          ((pair? term2)
-                           (let ((st^ ((absento term1 (car term2)) st)))
-                             (and st^ ((absento term1 (cdr term2)) st^))))            
-                          ((var? term2)
-                           (let* ((c (lookup-c term2 st))
-                                  (A (c-A c)))
-                             (if (memv term1 A)
-                                 st
-                                 (let ((c^ (c-with-A c (cons term1 A))))
-                                   (set-c term2 c^ st)))))
-                          (else st))
-                        #f)))))))
+      (let ((state (state-S st)))
+        (let ((term1 (walk term1 state))
+              (term2 (walk term2 state)))
+          (let ((st ((=/= term1 term2) st)))
+            (if st
+                (cond
+                  ((pair? term2)
+                   (let ((st^ ((absento term1 (car term2)) st)))
+                     (and st^ ((absento term1 (cdr term2)) st^))))            
+                  ((var? term2)
+                   (let* ((c (lookup-c term2 st))
+                          (A (c-A c)))
+                     (if (memv term1 A)
+                         st
+                         (let ((c^ (c-with-A c (cons term1 A))))
+                           (set-c term2 c^ st)))))
+                  (else st))
+                #f)))))))
 
 
 ; Fold lst with proc and initial value init. If proc ever returns #f,
@@ -606,10 +606,10 @@
 (define ==
   (lambda (u v)
     (lambdag@ (st)
-              (let-values (((S added) (unify u v (state-S st))))
-                (if S
-                    (and-foldl update-constraints (state S (state-C st) (state-M st)) added)
-                    #f)))))
+      (let-values (((S added) (unify u v (state-S st))))
+        (if S
+            (and-foldl update-constraints (state S (state-C st) (state-M st)) added)
+            #f)))))
 
 
 ; Not fully optimized. Could do absento update with fewer
@@ -659,8 +659,8 @@
   (syntax-rules ()
     ((_ (x ...) g g* ...)
      (lambdag@ (st)
-               (let ((x (walk* x (state-S st))) ...)
-                 ((fresh () g g* ...) st))))))
+       (let ((x (walk* x (state-S st))) ...)
+         ((fresh () g g* ...) st))))))
 
 
 ; Create a constraint store of the old representation from a state
@@ -912,9 +912,9 @@
                 (let ((t2^ (walk t2 S)))
                   (if (pair? t2^)
                       (and
-                       (term-ununifiable? S Y N t1^ t2^)
-                       (t2-check (car t2^))
-                       (t2-check (cdr t2^)))
+                        (term-ununifiable? S Y N t1^ t2^)
+                        (t2-check (car t2^))
+                        (t2-check (cdr t2^)))
                       (term-ununifiable? S Y N t1^ t2^))))))
           t2-check)))))
 
@@ -951,7 +951,7 @@
                               (let ((T (remq1 t T)))
                                 `(,S ((,t) . ,D) ,Y ,N ,T)))
                              (else #f))))
-                       T))
+                 T))
               (else c))))
 
 (define terms-pairwise=?
@@ -969,11 +969,11 @@
             (pr-d^ (walk (rhs pr) S)))
         (cond
           ((exists
-            (lambda (t)
-              (let ((t-a^ (walk (lhs t) S))
-                    (t-d^ (walk (rhs t) S)))
-                (terms-pairwise=? pr-a^ pr-d^ t-a^ t-d^ S)))
-            T)
+               (lambda (t)
+                 (let ((t-a^ (walk (lhs t) S))
+                       (t-d^ (walk (rhs t) S)))
+                   (terms-pairwise=? pr-a^ pr-d^ t-a^ t-d^ S)))
+             T)
            (for-all
             (lambda (t)
               (let ((t-a^ (walk (lhs t) S))
@@ -991,8 +991,8 @@
               ((find
                 (lambda (d)
                   (exists
-                   (T-superfluous-pr? S Y N T)
-                   d))
+                      (T-superfluous-pr? S Y N T)
+                    d))
                 D) =>
                (lambda (d) `(,S ,(remq1 d D) ,Y ,N ,T)))
               (else c))))
@@ -1013,15 +1013,15 @@
   (lambdar@ (c : S D Y N T)
             (cond
               ((exists
-                (lambda (t)
-                  (let ((t2^ (walk (rhs t) S)))
-                    (cond
-                      ((pair? t2^) (let ((ta `(,(lhs t) . ,(car t2^)))
-                                         (td `(,(lhs t) . ,(cdr t2^))))
-                                     (let ((T `(,ta ,td . ,(remq1 t T))))
-                                       `(,S ((,t) . ,D) ,Y ,N ,T))))
-                      (else #f))))
-                T))
+                   (lambda (t)
+                     (let ((t2^ (walk (rhs t) S)))
+                       (cond
+                         ((pair? t2^) (let ((ta `(,(lhs t) . ,(car t2^)))
+                                            (td `(,(lhs t) . ,(cdr t2^))))
+                                        (let ((T `(,ta ,td . ,(remq1 t T))))
+                                          `(,S ((,t) . ,D) ,Y ,N ,T))))
+                         (else #f))))
+                 T))
               (else c))))
 
 (define find-d-conflict
@@ -1031,7 +1031,7 @@
        (lambda (d)
          (exists (lambda (pr)
                    (term-ununifiable? S Y N (lhs pr) (rhs pr)))
-                 d))
+           d))
        D))))
 
 (define drop-D-b/c-Y-or-N
@@ -1110,7 +1110,7 @@
   (lambda (S A N)
     (let ((N (map (lambda (n) (walk n S)) N)))
       (exists (lambda (a) (exists (same-var? (walk a S)) N))
-              A))))
+        A))))
 
 (define absento-fail-check
   (lambda (S T)
@@ -1413,15 +1413,15 @@
 (define smt-asserto/internal
   (lambda (e)
     (lambdag@ (st)
-              (let ((e (rewrite-assertion e st)))
-                (if e ((z/assert e) st) #f))
-              )))
+      (let ((e (rewrite-assertion e st)))
+        (if e ((z/assert e) st) #f))
+      )))
 
 (define smt-asserto
   (lambda (e)
     (lambdag@ (st)
-              ((smt-asserto/internal e) st)
-              )))
+      ((smt-asserto/internal e) st)
+      )))
 
 (define z/type->pred
   (lambda (smt-type)
@@ -1437,68 +1437,68 @@
 (define smt-typeo/internal
   (lambda (u smt-type)
     (lambdag@ (st)
-              (let ((type-pred (z/type->pred smt-type))
-                    (term (walk u (state-S st))))
-                (cond
-                  ((type-pred term) st)
-                  ((var? term)
-                   (let* ((c (lookup-c term st))
-                          (M (c-M c))
-                          (T (c-T c))
-                          (D (c-D c)))
-                     (cond ((not T)
-                            (cond
-                              ((not M) (bind* st
-                                              (lambdag@ (st) (set-c term (c-with-M c smt-type) st))
-                                              (z/ `(declare-const ,term ,smt-type))
-                                              (z/assert `(= (as ,term ,smt-type) (as ,term ,smt-type)))
-                                              (if (null? D) ; trigger delayed =/=, if (null? D)
-                                                  (lambdag@ (st) st)
-                                                  (lambdag@ (st) ((add-smt-disequality D) st)))
-                                              ))
-                              ((eq? M smt-type) st)
-                              (else #f)))
-                           ((eq? T 'numbero)
-                            (cond
-                              ((not M)
-                               (cond
-                                 ((or (eq? smt-type 'Int) (eq? smt-type 'Real))  ; M = #f, and smt-type = Int or Real
-                                  (bind* st
-                                         (lambdag@ (st) (set-c term (c-with-M c smt-type) st))
-                                         (z/ `(declare-const ,term ,smt-type))
-                                         (z/assert `(= (as ,term ,smt-type) (as ,term ,smt-type)))
-                                         (if (null? D) ; trigger delayed =/=, if (null? D)
-                                             (lambdag@ (st) st)
-                                             (lambdag@ (st) ((add-smt-disequality D) st)))
-                                         ))
-                                 (else #f)  ; M = #f, and smt-type != Int or Real
+      (let ((type-pred (z/type->pred smt-type))
+            (term (walk u (state-S st))))
+        (cond
+          ((type-pred term) st)
+          ((var? term)
+           (let* ((c (lookup-c term st))
+                  (M (c-M c))
+                  (T (c-T c))
+                  (D (c-D c)))
+             (cond ((not T)
+                    (cond
+                      ((not M) (bind* st
+                                      (lambdag@ (st) (set-c term (c-with-M c smt-type) st))
+                                      (z/ `(declare-const ,term ,smt-type))
+                                      (z/assert `(= (as ,term ,smt-type) (as ,term ,smt-type)))
+                                      (if (null? D) ; trigger delayed =/=, if (null? D)
+                                          (lambdag@ (st) st)
+                                          (lambdag@ (st) ((add-smt-disequality D) st)))
+                                      ))
+                      ((eq? M smt-type) st)
+                      (else #f)))
+                   ((eq? T 'numbero)
+                    (cond
+                      ((not M)
+                       (cond
+                         ((or (eq? smt-type 'Int) (eq? smt-type 'Real))  ; M = #f, and smt-type = Int or Real
+                          (bind* st
+                                 (lambdag@ (st) (set-c term (c-with-M c smt-type) st))
+                                 (z/ `(declare-const ,term ,smt-type))
+                                 (z/assert `(= (as ,term ,smt-type) (as ,term ,smt-type)))
+                                 (if (null? D) ; trigger delayed =/=, if (null? D)
+                                     (lambdag@ (st) st)
+                                     (lambdag@ (st) ((add-smt-disequality D) st)))
                                  ))
-                              ((or (eq? M 'Int) (eq? M 'Real))
-                               (if (eq? M smt-type) st #f) ) ; M is Int or Real
-                              (else #f) ; M != Int or Real, or smt-type != Int or Real
-                              ))
-                           (else #f) ; T is not numbero
-                           )
-                     ))
-                  (else #f)))
-              )))
+                         (else #f)  ; M = #f, and smt-type != Int or Real
+                         ))
+                      ((or (eq? M 'Int) (eq? M 'Real))
+                       (if (eq? M smt-type) st #f) ) ; M is Int or Real
+                      (else #f) ; M != Int or Real, or smt-type != Int or Real
+                      ))
+                   (else #f) ; T is not numbero
+                   )
+             ))
+          (else #f)))
+      )))
 
 (define smt-typeo
   (lambda (u smt-type)
     (lambdag@ (st)
-              ((smt-typeo/internal u smt-type) st)
-              )))
+      ((smt-typeo/internal u smt-type) st)
+      )))
 
 (define (add-smt-equality v t m)
   (lambdag@ (st)
-            (bind*
-             st
-             (smt-typeo/internal t m)
-             (lambda (st)
-               (if (var? t)
-                   ((z/assert `(= (as ,v ,m) (as ,t ,m)) #t) st)
-                   ((z/assert `(= (as ,v ,m) ,t) #t) st))))
-            ))
+    (bind*
+     st
+     (smt-typeo/internal t m)
+     (lambda (st)
+       (if (var? t)
+           ((z/assert `(= (as ,v ,m) (as ,t ,m)) #t) st)
+           ((z/assert `(= (as ,v ,m) ,t) #t) st))))
+    ))
 
 (define (get-smt-type st x)
   (cond
@@ -1527,19 +1527,19 @@
 
 (define (add-smt-disequality D)
   (lambdag@ (st)
-            (let ((as (filter-smt-ok? st D)))
-              (if (not (null? as))
-                  ((smt-asserto/internal
-                    `(and
+    (let ((as (filter-smt-ok? st D)))
+      (if (not (null? as))
+          ((smt-asserto/internal
+            `(and
+               ,@(map
+                  (lambda (cs)
+                    `(or
                       ,@(map
-                         (lambda (cs)
-                           `(or
-                             ,@(map
-                                (lambda (ds)
-                                  `(not (= ,(car ds) ,(cdr ds))))
-                                cs))) as))) st)
-                  st)
-              )))
+                         (lambda (ds)
+                           `(not (= ,(car ds) ,(cdr ds))))
+                         cs))) as))) st)
+          st)
+      )))
 
 (define global-buffer '())
 (define z/global
@@ -1550,24 +1550,24 @@
 (define z/local
   (lambda (ds R)
     (lambdag@ (st)
-              (bind*
-               st
-               (lambda (st)
-                 ;; set the branch M
-                 ;; FIXME: is it possible there is duplicate declare already in the branch M? 
-                 (let* ((lines (append ds R))
-                        (M (append (reverse lines) (state-M st))))
-                   (state-with-M st M)))
-               (lambda (st)
-                 ;; call z3
-                 ;; If decls already has declares in ds, remove the declares in ds
-                 (let ((ds (remove-declares* decls ds)))
-                   (set! decls (append ds decls))
-                   (let* ((lines (append ds R)))
-                     (set! local-buffer (append local-buffer lines))
-                     (call-z3 lines)
-                     st)
-                   ))))))
+      (bind*
+       st
+       (lambda (st)
+         ;; set the branch M
+         ;; FIXME: is it possible there is duplicate declare already in the branch M? 
+         (let* ((lines (append ds R))
+                (M (append (reverse lines) (state-M st))))
+           (state-with-M st M)))
+       (lambda (st)
+         ;; call z3
+         ;; If decls already has declares in ds, remove the declares in ds
+         (let ((ds (remove-declares* decls ds)))
+           (set! decls (append ds decls))
+           (let* ((lines (append ds R)))
+             (set! local-buffer (append local-buffer lines))
+             (call-z3 lines)
+             st)
+           ))))))
 (define (replay-if-needed a m)
   (let ((r (filter (lambda (x) (not (member x local-buffer))) m)))
     (unless (null? r)
@@ -1601,34 +1601,34 @@
 
 (define (z/check m a no_walk?)
   (lambdag@ (st)
-            (begin
-              (replay-if-needed (last-assumption (state-M st)) (state-M st))
-              (let ((r (wrap-neg ((z/reify-SM m no_walk?) st))))
-                (let ((dd (car r))
-                      (ds (cadr r))
-                      (R (caddr r))
-                      (vs (cadddr r)))
-                  (z/global dd)
-                  (bind*
-                   st
-                   (z/local ds R)
-                   (lambdag@ (st)
-                             (if (and a (check-sat-assuming a (state-M st)))
-                                 (begin
-                                   (let* ((p (assq a relevant-vars))
-                                          (vs^ (cdr p)))
-                                     (set! relevant-vars (cons (cons a (append vs vs^)) (remove p relevant-vars)))) 
-                                   st)
-                                 (if a #f st)))))))))
+    (begin
+      (replay-if-needed (last-assumption (state-M st)) (state-M st))
+      (let ((r (wrap-neg ((z/reify-SM m no_walk?) st))))
+        (let ((dd (car r))
+              (ds (cadr r))
+              (R (caddr r))
+              (vs (cadddr r)))
+          (z/global dd)
+          (bind*
+           st
+           (z/local ds R)
+           (lambdag@ (st)
+             (if (and a (check-sat-assuming a (state-M st)))
+                 (begin
+                   (let* ((p (assq a relevant-vars))
+                          (vs^ (cdr p)))
+                     (set! relevant-vars (cons (cons a (append vs vs^)) (remove p relevant-vars)))) 
+                   st)
+                 (if a #f st)))))))))
 
 (define (z/ line)
   (lambdag@ (st)
-            (let* ((S (state-S st))
-                   (m (remp (lambda (x)
-                              (and declares?
-                                   (not (var? (cadr (walk* x S)))) ))
-                            (list line))))
-              ((z/check m #f #f) st))))
+    (let* ((S (state-S st))
+           (m (remp (lambda (x)
+                      (and declares?
+                           (not (var? (cadr (walk* x S)))) ))
+                    (list line))))
+      ((z/check m #f #f) st))))
 
 (define assumption-count 0)
 (define (fresh-assumption)
@@ -1664,23 +1664,23 @@
   (lambda (e . args)
     (let ((no_walk? (and (not (null? args)) (car args))))
       (lambdag@ (st)
-                (let ((a0 (last-assumption (state-M st)))
-                      (a1 (fresh-assumption)))
-                  (let-values (((rs as) (if (eq? a0 'true)
-                                            (values '() '())
-                                            (values (cdr (assq a0 relevant-vars))
-                                                    (assq a0 assumption-chains)))))
-                    (set! relevant-vars (cons (cons a1 rs) relevant-vars))
-                    (set! assumption-chains (cons (cons a1 as) assumption-chains))
-                    (set! all-assumptions (cons a1 all-assumptions))
-                    (bind*
-                     st
-                     (z/check `((assert (=> ,a1 ,e))
-                                (declare-const ,a1 Bool))
-                              a1
-                              no_walk?)
-                     ))
-                  )))))
+        (let ((a0 (last-assumption (state-M st)))
+              (a1 (fresh-assumption)))
+          (let-values (((rs as) (if (eq? a0 'true)
+                                    (values '() '())
+                                    (values (cdr (assq a0 relevant-vars))
+                                            (assq a0 assumption-chains)))))
+            (set! relevant-vars (cons (cons a1 rs) relevant-vars))
+            (set! assumption-chains (cons (cons a1 as) assumption-chains))
+            (set! all-assumptions (cons a1 all-assumptions))
+            (bind*
+             st
+             (z/check `((assert (=> ,a1 ,e))
+                        (declare-const ,a1 Bool))
+                      a1
+                      no_walk?)
+             ))
+          )))))
 
 (define relevant-vars '())
 (define assumption-chains '())
@@ -1706,15 +1706,15 @@
 (define add-model
   (lambda (m)
     (lambdag@ (st)
-              (if (null? m)
-                  st
-                  (bind*
-                   st
-                   (lambda (st)
-                     (let ((var (car (car m)))
-                           (val (cadr (car m))))
-                       ((== var val) st)))
-                   (add-model (cdr m)))))))
+      (if (null? m)
+          st
+          (bind*
+           st
+           (lambda (st)
+             (let ((var (car (car m)))
+                   (val (cadr (car m))))
+               ((== var val) st)))
+           (add-model (cdr m)))))))
 
 (define assert-neg-model
   (lambda (m)
@@ -1731,50 +1731,50 @@
 
 (define z/purge
   (lambdag@ (st)
-            (let ((M (state-M st)))
-              (if (null? M)
-                  st
-                  (let ([a (last-assumption (state-M st))])
-                    (if (eq? a 'true)
-                        st
-                        (if (not (check-sat-assuming a (state-M st)))
-                            #f
-                            (let* ([rs (map (lambda (p)
-                                              (cons (reify-v-name (car p)) (car p)))
-                                            (cdr (assq a relevant-vars)))]
-                                   [rts (map (lambda (x)
-                                               (let* ((reified-v (car x)) 
-                                                      (v (cdr x))
-                                                      (c (lookup-c v st))
-                                                      (M (c-M c)))
-                                                 (cons reified-v M))) rs)])
-                              ((let loop ()
-                                 (lambdag@ (st)
-                                           (let ((m (get-model-inc)))
-                                             (let ((m (map (lambda (x)
-                                                             (let ((id (car x))
-                                                                   (val (cadr x))
-                                                                   (type (caddr x)))
-                                                               (let ((p (assq id rs)))
-                                                                 (list (cdr p) val type))))
-                                                           (filter (lambda (x)
-                                                                     (let ((id (car x))
-                                                                           (val (cadr x))
-                                                                           (type (caddr x)))
-                                                                       (let ((p (assq id rts)))
-                                                                         (if p (equal? (cdr p) type) #f)))) m))))
-                                               (let ((st (state-with-scope st (new-scope))))
-                                                 (mplus*
-                                                  (bind*
-                                                   st
-                                                   (add-model m))
-                                                  (bind*
-                                                   st
-                                                   (assert-neg-model m)
-                                                   (loop))))))))
-                               st)))))))))
+    (let ((M (state-M st)))
+      (if (null? M)
+          st
+          (let ([a (last-assumption (state-M st))])
+            (if (eq? a 'true)
+                st
+                (if (not (check-sat-assuming a (state-M st)))
+                    #f
+                    (let* ([rs (map (lambda (p)
+                                      (cons (reify-v-name (car p)) (car p)))
+                                    (cdr (assq a relevant-vars)))]
+                           [rts (map (lambda (x)
+                                       (let* ((reified-v (car x)) 
+                                              (v (cdr x))
+                                              (c (lookup-c v st))
+                                              (M (c-M c)))
+                                         (cons reified-v M))) rs)])
+                      ((let loop ()
+                         (lambdag@ (st)
+                           (let ((m (get-model-inc)))
+                             (let ((m (map (lambda (x)
+                                             (let ((id (car x))
+                                                   (val (cadr x))
+                                                   (type (caddr x)))
+                                               (let ((p (assq id rs)))
+                                                 (list (cdr p) val type))))
+                                           (filter (lambda (x)
+                                                     (let ((id (car x))
+                                                           (val (cadr x))
+                                                           (type (caddr x)))
+                                                       (let ((p (assq id rts)))
+                                                         (if p (equal? (cdr p) type) #f)))) m))))
+                               (let ((st (state-with-scope st (new-scope))))
+                                 (mplus*
+                                  (bind*
+                                   st
+                                   (add-model m))
+                                  (bind*
+                                   st
+                                   (assert-neg-model m)
+                                   (loop))))))))
+                       st)))))))))
 
-							   
+
 ;; (include "z3-server.scm")
 (define ns (make-base-namespace))
 
