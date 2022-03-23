@@ -1,6 +1,35 @@
 #lang racket
-(require "../mk.rkt")
+(require "../../rosette/rosette/base/core/term.rkt")
+(require "../../rosette/rosette/base/core/type.rkt")
+(require "../../rosette/rosette/base/form/define.rkt")
+
+(require "../../rosette/rosette/solver/solver.rkt")
+(require "../../rosette/rosette/solver/solution.rkt")
+(require "../../rosette/rosette/solver/smt/z3.rkt")
+(require (only-in "../../rosette/rosette/solver/smt/server.rkt" output-smt))
+
+(require (prefix-in r/ "../../rosette/rosette/base/core/equality.rkt"))
+(require (prefix-in r/ "../../rosette/rosette/base/core/bool.rkt"))
+(require (prefix-in r/ "../../rosette/rosette/base/core/real.rkt"))
+
+(require "../../rosette/rosette/query/core.rkt") ; current-solver
+;; (require "../../rosette/rosette/query/finitize.rkt")
+
+(require "../logging.rkt")
 (require "../test-check.rkt")
+(require "../mk.rkt")
+
+;; (current-bitwidth 8)
+;; (output-smt #t)
+(current-solver
+ (z3
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
 
 (define remove-one-elemento
   (lambda (x ls out)
@@ -16,47 +45,47 @@
 (define puzzleo
   (lambda (expr num* val num*^)
     (fresh ()
-      (smt-typeo val 'Int)
+      (rosette-typeo val r/@integer?)
       
       (conde
         [(numbero expr)
-         (smt-typeo expr 'Int)
+         (rosette-typeo expr r/@integer?)
          ;; Originally used (== expr val).
          ;; Which version is preferable?
          ;; What are the tradeoffs?
-         (smt-asserto `(= ,expr ,val))
+         (rosette-asserto `(,r/@= ,expr ,val))
          (remove-one-elemento expr num* num*^)]
 
         [(fresh (a1 a2 n1 n2 num*^^)
-           (smt-typeo n1 'Int)
-           (smt-typeo n2 'Int)
+           (rosette-typeo n1 r/@integer?)
+           (rosette-typeo n2 r/@integer?)
            (== `(+ ,a1 ,a2) expr)
-           (smt-asserto `(= ,val (+ ,n1 ,n2)))
+           (rosette-asserto `(,r/@= ,val (,r/@+ ,n1 ,n2)))
            (puzzleo a1 num* n1 num*^^)
            (puzzleo a2 num*^^ n2 num*^))]
 
         [(fresh (a1 a2 n1 n2 num*^^)
-           (smt-typeo n1 'Int)
-           (smt-typeo n2 'Int)
+           (rosette-typeo n1 r/@integer?)
+           (rosette-typeo n2 r/@integer?)
            (== `(- ,a1 ,a2) expr)
-           (smt-asserto `(= ,val (- ,n1 ,n2)))
+           (rosette-asserto `(,r/@= ,val (,r/@- ,n1 ,n2)))
            (puzzleo a1 num* n1 num*^^)
            (puzzleo a2 num*^^ n2 num*^))]
 
         [(fresh (a1 a2 n1 n2 num*^^)
-           (smt-typeo n1 'Int)
-           (smt-typeo n2 'Int)
+           (rosette-typeo n1 r/@integer?)
+           (rosette-typeo n2 r/@integer?)
            (== `(* ,a1 ,a2) expr)
-           (smt-asserto `(= ,val (* ,n1 ,n2)))
+           (rosette-asserto `(,r/@= ,val (,r/@* ,n1 ,n2)))
            (puzzleo a1 num* n1 num*^^)
            (puzzleo a2 num*^^ n2 num*^))]
 
         [(fresh (a1 a2 n1 n2 num*^^)
-           (smt-typeo n1 'Int)
-           (smt-typeo n2 'Int)
+           (rosette-typeo n1 r/@integer?)
+           (rosette-typeo n2 r/@integer?)
            (== `(/ ,a1 ,a2) expr)
-           (smt-asserto `(not (= ,n2 0)))
-           (smt-asserto `(= ,val (div ,n1 ,n2)))
+           (rosette-asserto `(,r/@! (,r/@= ,n2 0)))
+           (rosette-asserto `(,r/@= ,val (,r/@/ ,n1 ,n2)))
            (puzzleo a1 num* n1 num*^^)
            (puzzleo a2 num*^^ n2 num*^))]
         ))

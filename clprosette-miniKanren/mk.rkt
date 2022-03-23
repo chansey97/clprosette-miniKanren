@@ -1,6 +1,25 @@
 #lang racket
+(require "../rosette/rosette/base/core/term.rkt")
+(require "../rosette/rosette/base/core/type.rkt")
+
+(require "../rosette/rosette/base/form/define.rkt")
+
+(require "../rosette/rosette/solver/solver.rkt")
+(require "../rosette/rosette/solver/solution.rkt")
+(require "../rosette/rosette/solver/smt/z3.rkt")
+
+(require (prefix-in r/ "../rosette/rosette/base/core/bool.rkt"))
+(require (prefix-in r/ "../rosette/rosette/base/core/equality.rkt"))
+(require (prefix-in r/ "../rosette/rosette/base/core/real.rkt"))
+(require (prefix-in r/ "../rosette/rosette/base/core/function.rkt"))
+
+(require "../rosette/rosette/query/eval.rkt")
+(require "../rosette/rosette/query/core.rkt") ; current-solver
+
 (require "./logging.rkt")
 (provide (all-defined-out))
+
+;; ---- miniKanren racket compatible code ---- ----
 
 ;; extra stuff for racket
 ;; due mostly to samth
@@ -59,8 +78,11 @@
   (lambda (v st)
     (state (state-S st) (hash-remove (state-C st) v) (state-M st))))
 
+(define vars-c
+  (lambda (st)
+    (hash-keys (state-C st))))
 
-;; (include "mk.scm")
+;; ---- miniKanren code ----
 
 ; Scope object.
 ; Used to determine whether a branch has occured between variable
@@ -257,6 +279,7 @@
 ; Contains:
 ;   S - the substitution
 ;   C - the constraint store
+;   M - the smt commands store
 
 (define state
   (lambda (S C M)
@@ -470,10 +493,10 @@
     ((_ n (q) g0 g ...)
      (begin
        (set-counter! -1)
-       (z/reset!)
+       (solver-clear (current-solver))
        (take n
              (inc
-              ((fresh (q) g0 g ... z/purge
+              ((fresh (q) g0 g ... r/purge
                       (lambdag@ (st)
                         (let ((st (state-with-scope st nonlocal-scope)))
                           (let ((z ((reify q) st)))
@@ -523,7 +546,7 @@
                     ((not T) (set-c term (c-with-T c type-id) st)) ; T=#f
                     (else #f) ; T != with typeid
                     ))
-                 ((or (eq? M 'Int) (eq? M 'Real))
+                 ((or (eq? (type-of M) r/@integer?) (eq? (type-of M) r/@real?))
                   (cond
                     ((eq? T 'numbero) st) ; T = numbero
                     ((and (not T) (eq? 'numbero type-id)) ; T = #f and type-id = numbero
@@ -552,7 +575,7 @@
           ((not S) st)
           ((null? added) #f)
           (else
-           (let ((st ((add-smt-disequality (list added)) st)))
+           (let ((st ((add-rosette-disequality (list added)) st)))
              (if st
                  ; Attach =/= constraint to all the disequality elements,
                  ; Because these =/= constraints are potential SMT assertion.
@@ -630,7 +653,7 @@
                             '())
                         (if (c-M old-c)
                             ;; SMT type propagation
-                            (list (add-smt-equality (lhs a) (rhs a) (c-M old-c)))
+                            (list (add-rosette-equality (lhs a) (rhs a) (c-M old-c)))
                             '())
                         (map (lambda (atom) (absento atom (rhs a))) (c-A old-c))
                         (map (lambda (d) (=/=* d)) (c-D old-c)))))))))
@@ -1262,185 +1285,73 @@
                         ,move-T-to-D-b/c-t2-atom ,split-t-move-to-d-b/c-pair
                         ,drop-from-D-b/c-T ,drop-t-b/c-t2-occurs-t1)))
 
-;; (include "smt.scm")
+;; ---- rosette intermediate layer code ----
 
-;; (define gc-assumption-threshold 10000000)
-;; (define gc-assumption-threshold 1000) ; original
-;; (define gc-assumption-threshold 250)
-;; (define gc-assumption-threshold 100)
-;; (define gc-assumption-threshold 50)
-(define gc-assumption-threshold 25)
-;; (define gc-assumption-threshold 1)
-
-(define partition
-  (lambda (p xs)
-    (cons (filter p xs)
-      (filter (lambda (x) (not (p x))) xs))))
-
-(define declare-datatypes?
-  (lambda (s)
-    (and (pair? s)
-         (or (eq? 'declare-datatypes (car s))
-             (eq? 'declare-sort (car s)))
-         (cadr s))))
-
-(define declares?
-  (lambda (s)
-    (and (pair? s)
-         (or (eq? 'declare-fun (car s))
-             (eq? 'declare-const (car s)))
-         )))
-
-(define remove-redundant-declares
-  (lambda (ds)
-    (remove-duplicates ds)))
-
-(define remove-declares*
-  (lambda (ds^ ds)
-    (remove* ds^ ds)))
-
-(define decls '())
-(define undeclared?!
-  (lambda (x)
-    (let ((r (not (member x decls))))
-      (when r
-        (set! decls (cons x decls)))
-      r)))
-
-; (Var) -> Symbol
-(define (reify-v-name v)
-  (string->symbol
-   (string-append "_v" (number->string (var-idx v)))))
-
-; (Term) -> SExpr
-; replaces all miniKanren variables in a term with symbols like _v0 for the solver.
-(define (reify-to-smt-symbols v)
+(define (reify-to-rosette-symbols v st)
   (cond
-    ((var? v) (reify-v-name v))
+    ((var? v)
+     (let* ((c (lookup-c v st))
+            (M (c-M c)))
+       (when (not M)
+         (error 'reify-to-rosette-symbols (format "All the variables must be rosette-typeo first! ~a" v) ))
+       M))
     ((pair? v)
-     (cons (reify-to-smt-symbols (car v)) (reify-to-smt-symbols (cdr v))))
+     (cons (reify-to-rosette-symbols (car v) st) (reify-to-rosette-symbols (cdr v) st)))
     (else v)))
 
-(define vars/smt-type
-  (lambda (e acc)
-    (cond
-      ((pair? e)
-       (cond
-         ((or (eq? (car e) 'as)
-              (eq? (car e) 'declare-const))
-          (let ((v (cadr e))
-                (t (caddr e)))
-            (cond
-              ((var? v) (cons (list v t) acc))
-              (else acc))
-            ))
-         (else
-          (vars/smt-type (cdr e) (vars/smt-type (car e) acc)))))
-      (else acc))))
+(define (reify-to-rosette-term v)
+  (match v
+    [(list (? procedure? rator) rands ...)
+     (apply rator (map (lambda (rand) (reify-to-rosette-term rand)) rands))]
+    [_ v]))
 
-(define z/reify-SM
-  (lambda (M . args)
-    (let ((no_walk? (and (not (null? args)) (car args))))
-      (lambda (st)
-        (let* ((S (state-S st))
-               (M (reverse M))
-               (M (if no_walk? M (walk* M S)))
-               (vs (vars/smt-type M '()))
-               (M (reify-to-smt-symbols M))
-               (dd-M (partition declare-datatypes? M))
-               (dd (car dd-M))
-               (M (cdr dd-M))
-               (ds-R (partition declares? M))
-               (ds (car ds-R))
-               (R (cdr ds-R)))
-          (list
-           dd
-           ds
-           R
-           vs))))))
+(define (r/reify-SM R st)
+  ;; (clear-terms!) ;; no neeed?
+  (let* ((S (state-S st))
+         (R (walk* R S))
+         (R (reify-to-rosette-symbols R st))
+         (R (reify-to-rosette-term R)))
+    R))
 
-(define (get-assumptions a)
-  (let ((pos (assq a assumption-chains)))
-    (map (lambda (b)
-           (if (memq b pos)
-               b
-               `(not ,b)))
-         (reverse all-assumptions))))
-(define (check-sat-assuming a m)
-  (replay-if-needed a m)
-  (call-z3 `((check-sat-assuming ,(get-assumptions a))))
-  (read-sat))
-
-(define rewrite-assertion
-  (lambda (e st)
-    (cond
-      ((var? e)
-       (let* ((S (state-S st))
-              (e^ (walk* e S)))
-         (cond
-           ((var? e^)
-            (let* ((c (lookup-c e^ st))
-                   (M (c-M c)))
-              (cond
-                ((not M) (error 'rewrite-assertion "All the variables must be smt-typeo first!" e))
-                (else `(as ,e ,M)))))
-           (else e)))
-       )
-      ((pair? e)
-       (cond
-         ((eq? (car e) 'as)
-          (let ((v (cadr e))
-                (t (caddr e)))
-            (let* ((S (state-S st))
-                   (v^ (walk* v S)))
-              (cond
-                ((var? v^)
-                 (let* ((c (lookup-c v^ st))
-                        (M (c-M c)))
-                   (cond
-                     ((not M)
-                      (error 'rewrite-assertion "All the variables must be smt-typeo first!" e))
-                     (else
-                      (cond
-                        ((not (equal? M t))
-                         (error 'rewrite-assertion "inconsistent with qualified variable" e))
-                        (else e))))))
-                (else v^)))))
-         (else
-          (cons (rewrite-assertion (car e) st) (rewrite-assertion (cdr e) st)))))
-      (else e))))
-
-(define smt-asserto/internal
+(define rosette-asserto/internal
   (lambda (e)
     (lambdag@ (st)
-      (let ((e (rewrite-assertion e st)))
-        (if e ((z/assert e) st) #f))
+      (bind*
+       st
+       (lambda (st)
+         (let ((R (r/reify-SM e st))
+               (M (state-M st)))
+           (state-with-M st (cons R M))))
+       (lambda (st)
+         (solver-clear (current-solver))
+         (solver-assert (current-solver) (state-M st))
+         (let ((sol (solver-check (current-solver))))
+           (cond
+             [(sat? sol) st]
+             [else (solver-clear (current-solver)) #f]))
+         ))
       )))
 
-(define smt-asserto
+(define rosette-asserto
   (lambda (e)
-    (lambdag@ (st)
-      ((smt-asserto/internal e) st)
-      )))
+    (rosette-asserto/internal e)))
 
-(define z/type->pred
-  (lambda (smt-type)
+(define r-type->pred
+  (lambda (r-type)
     (cond
-      ((equal? smt-type 'Int)
-       (lambda (x) (and (number? x) (exact? x))))
-      ((equal? smt-type 'Real)
-       (lambda (x) (and (number? x) (not (exact? x)))))
-      ((equal? smt-type 'Bool)
-       (lambda (x) (boolean? x)))
-      (else (error 'z/type->pred "not support type" smt-type)))))
+      ((equal? r-type r/@integer?) integer?)
+      ((equal? r-type r/@real?) real?)
+      (else (lambda (t) (equal? (type-of t) r-type))))))
 
-(define smt-typeo/internal
-  (lambda (u smt-type)
+(define rosette-typeo/internal
+  (lambda (u r-type)
     (lambdag@ (st)
-      (let ((type-pred (z/type->pred smt-type))
+      (let ((type-pred (r-type->pred r-type))
             (term (walk u (state-S st))))
         (cond
-          ((type-pred term) st)
+          ((and (not (var? term)) ; it is just defensive code, type-of var? is any/c though 
+                (type-pred term))
+           st)
           ((var? term)
            (let* ((c (lookup-c term st))
                   (M (c-M c))
@@ -1449,33 +1360,37 @@
              (cond ((not T)
                     (cond
                       ((not M) (bind* st
-                                      (lambdag@ (st) (set-c term (c-with-M c smt-type) st))
-                                      (z/ `(declare-const ,term ,smt-type))
-                                      (z/assert `(= (as ,term ,smt-type) (as ,term ,smt-type)))
+                                      (lambdag@ (st)
+                                        (let ()
+                                          (define-symbolic* r-sym r-type)
+                                          (set-c term (c-with-M c r-sym) st)))
+                                      ;; (rosette-asserto/internal `(,r/@equal? ,term ,term))
                                       (if (null? D) ; trigger delayed =/=, if (null? D)
                                           (lambdag@ (st) st)
-                                          (lambdag@ (st) ((add-smt-disequality D) st)))
+                                          (lambdag@ (st) ((add-rosette-disequality D) st)))
                                       ))
-                      ((eq? M smt-type) st)
+                      ((equal? (type-of M) r-type) st)
                       (else #f)))
                    ((eq? T 'numbero)
                     (cond
                       ((not M)
                        (cond
-                         ((or (eq? smt-type 'Int) (eq? smt-type 'Real))  ; M = #f, and smt-type = Int or Real
+                         ((or (eq? r-type r/@integer?) (eq? r-type r/@real?))  ; M = #f, and r-type = Int or Real
                           (bind* st
-                                 (lambdag@ (st) (set-c term (c-with-M c smt-type) st))
-                                 (z/ `(declare-const ,term ,smt-type))
-                                 (z/assert `(= (as ,term ,smt-type) (as ,term ,smt-type)))
+                                 (lambdag@ (st)
+                                   (let ()
+                                     (define-symbolic* r-sym r-type)
+                                     (set-c term (c-with-M c r-sym) st)))
+                                 ;; (rosette-asserto/internal `(,r/@equal? ,term ,term))
                                  (if (null? D) ; trigger delayed =/=, if (null? D)
                                      (lambdag@ (st) st)
-                                     (lambdag@ (st) ((add-smt-disequality D) st)))
+                                     (lambdag@ (st) ((add-rosette-disequality D) st)))
                                  ))
-                         (else #f)  ; M = #f, and smt-type != Int or Real
+                         (else #f)  ; M = #f, and r-type != Int or Real
                          ))
-                      ((or (eq? M 'Int) (eq? M 'Real))
-                       (if (eq? M smt-type) st #f) ) ; M is Int or Real
-                      (else #f) ; M != Int or Real, or smt-type != Int or Real
+                      ((or (eq? (type-of M) r/@integer?) (eq? (type-of M) r/@real?))
+                       (if (eq? (type-of M) r-type) st #f) ) ; M is Int or Real
+                      (else #f) ; M != Int or Real, or r-type != Int or Real
                       ))
                    (else #f) ; T is not numbero
                    )
@@ -1483,225 +1398,69 @@
           (else #f)))
       )))
 
-(define smt-typeo
-  (lambda (u smt-type)
-    (lambdag@ (st)
-      ((smt-typeo/internal u smt-type) st)
-      )))
+(define rosette-typeo
+  (lambda (u r-type)
+    (rosette-typeo/internal u r-type)))
 
-(define (add-smt-equality v t m)
+(define (add-rosette-equality v t m)
   (lambdag@ (st)
     (bind*
      st
-     (smt-typeo/internal t m)
+     (rosette-typeo/internal t (type-of m))
      (lambda (st)
-       (if (var? t)
-           ((z/assert `(= (as ,v ,m) (as ,t ,m)) #t) st)
-           ((z/assert `(= (as ,v ,m) ,t) #t) st))))
-    ))
+       (cond
+         [(r/function? (type-of m))
+          ;; TODO: support multiple arguments
+          (let ((dom (r/function-domain (type-of m))))
+            (define-symbolic* rx (car dom))
+            ((rosette-asserto/internal `(,r/@forall (,rx) (,r/@equal? (,v ,rx) (,t ,rx)))) st))]
+         [else
+          ((rosette-asserto/internal `(,r/@equal? ,m ,t)) st)]))
+     )))
 
-(define (get-smt-type st x)
+(define (get-rosette-type st x)
   (cond
-    ((number? x) 'Int)
-    ((boolean? x) 'Bool)
     ((var? x)
-     (let ((c (lookup-c x st)))
-       (c-M c)))
-    (else #f)))
+     (let* ((c (lookup-c x st))
+            (M (c-M c)))
+       (if (not M) #f (type-of M))))
+    (else (type-of x))))
 
-(define (smt-ok? st x y)
-  (let ((x (walk* x (state-S st)))
-        (y (walk* y (state-S st))))
-    (let ((x-type (get-smt-type st x))
-          (y-type (get-smt-type st y)))
-      (if (or (eq? x-type #f) (eq? y-type #f)) #f
+(define (rosette-ok? st x y)
+  (let* ((x (walk* x (state-S st)))
+         (y (walk* y (state-S st))))
+    (let ((x-type (get-rosette-type st x))
+          (y-type (get-rosette-type st y)))
+      (if (or (eq? x-type #f) (eq? y-type #f))
+          #f
           (equal? x-type y-type)))))
 
-(define (filter-smt-ok? st D)
+(define (filter-rosette-ok? st D)
   (filter
    (lambda (cs)
      (for-all (lambda (ds)
-                (smt-ok? st (car ds) (cdr ds)))
+                (rosette-ok? st (car ds) (cdr ds)))
               cs))
    D))
 
-(define (add-smt-disequality D)
+;; TODO: For r/function? disquality promotion, by r/exists r/@equal?
+(define (add-rosette-disequality D)
   (lambdag@ (st)
-    (let ((as (filter-smt-ok? st D)))
+    (let ((as (filter-rosette-ok? st D)))
       (if (not (null? as))
-          ((smt-asserto/internal
-            `(and
-               ,@(map
-                  (lambda (cs)
-                    `(or
-                      ,@(map
-                         (lambda (ds)
-                           `(not (= ,(car ds) ,(cdr ds))))
-                         cs))) as))) st)
+          ((rosette-asserto/internal
+            `(,r/@&&
+              ,@(map
+                 (lambda (cs)
+                   `(,r/@||
+                     ,@(map
+                        (lambda (ds)
+                          `(,r/@! (,r/@equal? ,(car ds) ,(cdr ds))))
+                        cs)))
+                 as)))
+           st)
           st)
       )))
-
-(define global-buffer '())
-(define z/global
-  (lambda (lines)
-    (call-z3 lines)
-    (set! global-buffer (append global-buffer lines))))
-(define local-buffer '())
-(define z/local
-  (lambda (ds R)
-    (lambdag@ (st)
-      (bind*
-       st
-       (lambda (st)
-         ;; set the branch M
-         ;; FIXME: is it possible there is duplicate declare already in the branch M? 
-         (let* ((lines (append ds R))
-                (M (append (reverse lines) (state-M st))))
-           (state-with-M st M)))
-       (lambda (st)
-         ;; call z3
-         ;; If decls already has declares in ds, remove the declares in ds
-         (let ((ds (remove-declares* decls ds)))
-           (set! decls (append ds decls))
-           (let* ((lines (append ds R)))
-             (set! local-buffer (append local-buffer lines))
-             (call-z3 lines)
-             st)
-           ))))))
-(define (replay-if-needed a m)
-  (let ((r (filter (lambda (x) (not (member x local-buffer))) m)))
-    (unless (null? r)
-      (let ((lines (reverse r)))
-        (let ((new-decls  (filter (lambda (x)
-                                    (and (declares? x)
-                                         (not (equal? (substring (symbol->string (cadr x)) 0 2) "_a"))))
-                                  lines))
-              (new-assumptions (filter (lambda (x)
-                                         (and (declares? x)
-                                              (equal? (substring (symbol->string (cadr x)) 0 2) "_a")
-                                              (eq? (caddr x) 'Bool)))
-                                       lines))
-              (other-lines (filter (lambda (x) (not (declares? x))) lines)))
-          (let* ((undeclared-decls (filter (lambda (x) (undeclared?! x)) new-decls))
-                 (undeclared-assumptions (filter (lambda (x) (undeclared?! x)) new-assumptions))
-                 (undeclared-rs
-                  (if (eq? a 'true)
-                      '()
-                      (let* ((p (assq a relevant-vars))
-                             (vs (cdr p))
-                             (vs-decls (map (lambda (v/t) `(declare-const ,(reify-v-name (car v/t)) ,(cadr v/t))) vs)))
-                        (filter undeclared?! vs-decls)))))
-            (let* ((undeclared-decls/rs (append undeclared-rs undeclared-decls))
-                   (undeclared-decls/rs (remove-redundant-declares undeclared-decls/rs))
-                   (actual-lines (append undeclared-decls/rs undeclared-assumptions other-lines)))
-              (set! all-assumptions (append (map cadr undeclared-assumptions) all-assumptions))
-              (set! local-buffer (append local-buffer actual-lines))            
-              (call-z3 actual-lines)
-              )))))))
-
-(define (z/check m a no_walk?)
-  (lambdag@ (st)
-    (begin
-      (replay-if-needed (last-assumption (state-M st)) (state-M st))
-      (let ((r (wrap-neg ((z/reify-SM m no_walk?) st))))
-        (let ((dd (car r))
-              (ds (cadr r))
-              (R (caddr r))
-              (vs (cadddr r)))
-          (z/global dd)
-          (bind*
-           st
-           (z/local ds R)
-           (lambdag@ (st)
-             (if (and a (check-sat-assuming a (state-M st)))
-                 (begin
-                   (let* ((p (assq a relevant-vars))
-                          (vs^ (cdr p)))
-                     (set! relevant-vars (cons (cons a (append vs vs^)) (remove p relevant-vars)))) 
-                   st)
-                 (if a #f st)))))))))
-
-(define (z/ line)
-  (lambdag@ (st)
-    (let* ((S (state-S st))
-           (m (remp (lambda (x)
-                      (and declares?
-                           (not (var? (cadr (walk* x S)))) ))
-                    (list line))))
-      ((z/check m #f #f) st))))
-
-(define assumption-count 0)
-(define (fresh-assumption)
-  (when (and (= (remainder assumption-count gc-assumption-threshold) 0)
-             (> assumption-count 0))
-    (z/gc!))
-  (set! assumption-count (+ assumption-count 1))
-  (string->symbol ;(format #f "_a~d" assumption-count)
-   (string-append "_a" (number->string assumption-count))
-   ))
-
-(define (last-assumption m)
-  (let ((r (filter (lambda (x) (and (pair? x)
-                                    (eq? 'assert (car x))
-                                    (pair? (cadr x))
-                                    (eq? (car (cadr x)) '=>)
-                                    (equal? (substring (symbol->string (cadr (cadr x))) 0 2) "_a")))
-                   m)))
-    (if (null? r)
-        'true
-        (cadr (cadr (car r))))))
-
-(define (wrap-neg e)
-  (if (number? e)
-      (if (< e 0)
-          `(- ,(- e))
-          e)
-      (if (pair? e)
-          (cons (wrap-neg (car e)) (wrap-neg (cdr e)))
-          e)))
-
-(define z/assert
-  (lambda (e . args)
-    (let ((no_walk? (and (not (null? args)) (car args))))
-      (lambdag@ (st)
-        (let ((a0 (last-assumption (state-M st)))
-              (a1 (fresh-assumption)))
-          (let-values (((rs as) (if (eq? a0 'true)
-                                    (values '() '())
-                                    (values (cdr (assq a0 relevant-vars))
-                                            (assq a0 assumption-chains)))))
-            (set! relevant-vars (cons (cons a1 rs) relevant-vars))
-            (set! assumption-chains (cons (cons a1 as) assumption-chains))
-            (set! all-assumptions (cons a1 all-assumptions))
-            (bind*
-             st
-             (z/check `((assert (=> ,a1 ,e))
-                        (declare-const ,a1 Bool))
-                      a1
-                      no_walk?)
-             ))
-          )))))
-
-(define relevant-vars '())
-(define assumption-chains '())
-(define all-assumptions '())
-(define (z/reset!)
-  (init-log)
-  (call-z3 '((reset)))
-  (set! decls '())
-  (set! relevant-vars '())
-  (set! assumption-chains '())
-  (set! all-assumptions '())
-  (set! assumption-count 0)
-  (set! global-buffer '())
-  (set! local-buffer '()))
-(define (z/gc!)
-  (printf/debug "gc z3...\n")
-  (call-z3 '((reset)))
-  (call-z3 global-buffer)
-  (set! decls '())
-  (set! all-assumptions '())
-  (set! local-buffer '()))
 
 (define add-model
   (lambda (m)
@@ -1718,240 +1477,36 @@
 
 (define assert-neg-model
   (lambda (m)
-    (let* ([m
-            (filter (lambda (x) ; ignoring functions
-                      (let ((val (cadr x)))
-                        (or (number? val) 
-                            (boolean? val)
-                            (symbol? val)
-                            ))) m)])
-      (if (null? m)
-          fail
-          (z/assert (cadr (neg-model m)))))))
+    (lambdag@ (st)
+      (let ((block-clause `(,r/@||
+                            ,@(map
+                               (lambda (xs)
+                                 (let ((var (car xs))
+                                       (val (cadr xs)))
+                                   `(,r/@! (,r/@equal? ,var ,val))))
+                               m))))
+        ((rosette-asserto/internal block-clause) st))
+      )))
 
-(define z/purge
+(define r/purge
   (lambdag@ (st)
-    (let ((M (state-M st)))
-      (if (null? M)
-          st
-          (let ([a (last-assumption (state-M st))])
-            (if (eq? a 'true)
-                st
-                (if (not (check-sat-assuming a (state-M st)))
-                    #f
-                    (let* ([rs (map (lambda (p)
-                                      (cons (reify-v-name (car p)) (car p)))
-                                    (cdr (assq a relevant-vars)))]
-                           [rts (map (lambda (x)
-                                       (let* ((reified-v (car x)) 
-                                              (v (cdr x))
-                                              (c (lookup-c v st))
-                                              (M (c-M c)))
-                                         (cons reified-v M))) rs)])
-                      ((let loop ()
-                         (lambdag@ (st)
-                           (let ((m (get-model-inc)))
-                             (let ((m (map (lambda (x)
-                                             (let ((id (car x))
-                                                   (val (cadr x))
-                                                   (type (caddr x)))
-                                               (let ((p (assq id rs)))
-                                                 (list (cdr p) val type))))
-                                           (filter (lambda (x)
-                                                     (let ((id (car x))
-                                                           (val (cadr x))
-                                                           (type (caddr x)))
-                                                       (let ((p (assq id rts)))
-                                                         (if p (equal? (cdr p) type) #f)))) m))))
-                               (let ((st (state-with-scope st (new-scope))))
-                                 (mplus*
-                                  (bind*
-                                   st
-                                   (add-model m))
-                                  (bind*
-                                   st
-                                   (assert-neg-model m)
-                                   (loop))))))))
-                       st)))))))))
-
-
-;; (include "z3-server.scm")
-(define ns (make-base-namespace))
-
-(define z3-counter-check-sat 0)
-(define z3-counter-get-model 0)
-
-(define log-all-calls #f)
-;; (define log-all-calls #t)
-
-(define log-all-calls-with-file #f)
-;; (define log-all-calls-with-file #t)
-
-(define z3-unknown-robust #f)
-;; (define z3-unknown-robust #t)
-
-;; (define z3-version 'z3-4.8.7)
-(define z3-version 'z3-4.8.12)
-
-(define z3-params '(;; smt.arith.solver:
-                    ;; default:0
-                    "smt.random_seed=1"
-                    ;; "smt.random_seed=2"
-                    ;; "smt.random_seed=3"
-                    
-                    ;; smt.arith.solver:
-                    ;; default:2 in z3-4.8.7
-                    ;; default:6 in z3-4.8.12
-                    ;; "smt.arith.solver=1"
-                    ;; "smt.arith.solver=2"
-                    "smt.arith.solver=6"
-                    ))
-
-(define (z3-process-start)
-  (let ((r (process (string-append "z3 -in " (foldr (lambda (x y) (string-append x " " y)) "" z3-params)))))
-    (values (cadr r) (car r) (cadddr r) (caddr r))))
-
-(define-values (z3-out z3-in z3-err z3-p)
-  (z3-process-start))
-
-;; (define (z3-reset!)
-;;   (let-values (((out in err p)
-;;                 (z3-process-start)))
-;;     (set! z3-out out)
-;;     (set! z3-in in)
-;;     (set! z3-err err)
-;;     (set! z3-p p)))
-(define (z3-check-in!)
-  (if (eof-object? z3-in)
-      (error 'z3-check-in "z3 input port")
-      ;; (if (= 0 (mod z3-counter-check-sat 300))
-      ;;     (z3-reset!)
-      ;;     #t)
-      #t))
-
-(define read-sat
-  (lambda ()
-    (z3-check-in!)
-    (let ([r (read z3-in)])
-      (when log-all-calls-with-file
-        (let ((p^ (open-output-file "log.smt" #:exists 'append)))
-          (fprintf p^ "~a\n" r)
-          (flush-output p^)
-          (close-output-port p^)))
-      (when log-all-calls (printf/debug "read-sat: ~a\n" r))
-      (if (eq? r 'sat)
-          #t
-          (if (eq? r 'unsat)
-              #f
-              (if (eq? r 'unknown)
-                  (begin
-                    (printf/warning "read-sat: unknown\n")
-                    (when z3-unknown-robust (z/gc!))
-                    #f)
-                  (error 'read-sat (format "~a" r))))))))
-
-(define (init-log)
-  (when log-all-calls-with-file
-    (let ((p (open-output-file "log.smt" #:exists 'replace)))
-      (close-output-port p))))
-
-;; TODO: Support other types, e.g. Bitvector, etc.
-;; May using string instead of symbol.
-(define scheme->smt
-  (lambda (e)
-    (cond
-      ((pair? e) (cons (scheme->smt (car e)) (scheme->smt (cdr e))))
-      ((eq? e #t) 'true)
-      ((eq? e #f) 'false)
-      (else e))))
-
-(define call-z3
-  (lambda (xs)
-    (when log-all-calls (printf/debug "call-z3 enter: xs = ~a\n" xs))
-    (let ((xs (scheme->smt xs)))
-      (when log-all-calls-with-file
-        (let ((p^ (open-output-file "log.smt" #:exists 'append)))
-          (for-each (lambda (x)
-                      (fprintf p^ "~a\n" x)) xs)
-          (flush-output p^)
-          (close-output-port p^)))
-      (for-each (lambda (x)
-                  (when log-all-calls (printf/debug "~a\n" x))
-                  (fprintf z3-out "~a\n" x)) xs)
-      (flush-output z3-out))
-    ))
-
-
-(define read-model
-  (lambda ()
-    (let ([m (read z3-in)])
-      (when log-all-calls-with-file
-        (let ((p^ (open-output-file "log.smt" #:exists 'append)))
-          (if (eq? z3-version 'z3-4.8.12)
-              (if (pair? m)
-                  (begin
-                    (fprintf p^ "(\n")
-                    (for-each (lambda (x)
-                                (fprintf p^ "  ~a\n" x)) m)
-                    (fprintf p^ ")\n"))
-                  (fprintf p^ "~a\n" m))
-              (if (equal? (car m) 'model)
-                  (begin
-                    (fprintf p^ "(\n")
-                    (fprintf p^ "  model\n")
-                    (for-each (lambda (x)
-                                (fprintf p^ "  ~a\n" x)) (cdr m))
-                    (fprintf p^ ")\n"))
-                  (fprintf p^ "~a\n" m)))
-          (flush-output p^)
-          (close-output-port p^)))
-      (when log-all-calls (printf/debug "~a\n" m))
-      (map (lambda (x)
-             (let ((id (cadr x))
-                   (params (caddr x))
-                   (type (cadddr x))
-                   (val (car (cddddr x)) ))
-               (let ((val (cond
-                            ((eq? val 'false) #f)
-                            ((eq? val 'true) #t)
-                            (else (eval val ns)))))
-                 (list id val type))
-               ))
-           (filter (lambda (x)
-                     ;; We currently don't support functions, so we shouldn't get a model which includes functions 
-                     ;; NOTE: z3-4.8.12 will return functions, even if we don't use functions.                     
-                     (let ((params (caddr x)))
-                       (cond
-                         ((null? params) #t)
-                         (else
-                          (if (eq? z3-version 'z3-4.8.12)
-                              #f
-                              (error 'read-model "doesn't support functions params" params))))))
-                   (if (eq? z3-version 'z3-4.8.12)
-                       m
-                       (cdr m)))
-           ))))
-
-(define get-model-inc
-  (lambda ()
-    (call-z3 '((get-model)))
-    (set! z3-counter-get-model (+ z3-counter-get-model 1))
-    (read-model)))
-
-
-(define neg-model
-  (lambda (model)
-    (cons
-        'assert
-      (list
-       (cons
-           'or
-         (map
-          (lambda (xv)
-            (let ((id (car xv))
-                  (val (cadr xv))
-                  (type (caddr xv)))
-              `(not (= (as ,id ,type) ,val))
-              )) model))))
-    ))
-
+    ((let loop ()
+       (lambdag@ (st)
+         (let* ((sol (solver-check (current-solver)))
+                (_ (when (not (sat? sol)) (error 'r/purge "r/purge's solver state must be sat")))
+                (vs (vars-c st))
+                (vs-M (filter (lambda (v) (c-M (lookup-c v st))) vs))
+                (m (map (lambda (v) (list v (c-M (lookup-c v st)))) vs-M))
+                (m (map (lambda (xs) (list (car xs) (evaluate (cadr xs) sol) )) m))
+                (m (filter (lambda (xs) (not (constant? (cadr xs)))) m)))
+           (let ((st (state-with-scope st (new-scope))))
+             (mplus*
+              (bind*
+               st
+               ;; (state-with-M st '())
+               (add-model m))
+              (bind*
+               st
+               (assert-neg-model m)
+               (loop)))))))
+     st)))

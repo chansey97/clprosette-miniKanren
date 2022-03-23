@@ -1,13 +1,78 @@
 #lang racket
-(require "../mk.rkt")
+(require "../../rosette/rosette/base/core/term.rkt")
+(require "../../rosette/rosette/base/core/type.rkt")
+(require "../../rosette/rosette/base/form/define.rkt")
+
+(require "../../rosette/rosette/solver/solver.rkt")
+(require "../../rosette/rosette/solver/solution.rkt")
+(require "../../rosette/rosette/solver/smt/z3.rkt")
+(require (only-in "../../rosette/rosette/solver/smt/server.rkt" output-smt))
+
+(require (prefix-in r/ "../../rosette/rosette/base/core/equality.rkt"))
+(require (prefix-in r/ "../../rosette/rosette/base/core/bool.rkt"))
+(require (prefix-in r/ "../../rosette/rosette/base/core/real.rkt"))
+
+(require "../../rosette/rosette/query/core.rkt") ; current-solver
+;; (require "../../rosette/rosette/query/finitize.rkt")
+
+(require "../logging.rkt")
 (require "../test-check.rkt")
+(require "../mk.rkt")
+
+;; (current-bitwidth 8)
+;; (output-smt #t)
+(current-solver
+ (z3
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
+
+;; TODO:
+;; 1. rosette variable but no assertion, shoud we label it by r/purge?
+;; 2. implement reifier with rosette constraint
+(run 1 (q)
+  (fresh ()
+    (rosette-typeo q r/@integer?)
+    ))
+;; (_.0)
+
+(run 5 (q)
+  (fresh (a b)
+    (rosette-typeo a r/@integer?)
+    (rosette-typeo b r/@integer?)
+    (rosette-asserto `(,r/@>= ,b 0))
+    (== q `(,a ,b))
+    ))
+;; ((_.0 0) (_.0 1) (_.0 2) (_.0 3) (_.0 4))
+
+(test "basic"
+  (run 1 (q)
+    (fresh ()
+      (rosette-typeo q r/@integer?)
+      (rosette-asserto `(,r/@equal? ,q 5))
+      ))
+  '(5))
+
+(test "basic"
+  (run 2 (q)
+    (fresh ()
+      (rosette-typeo q r/@integer?)
+      (conde
+        ((rosette-asserto `(,r/@equal? ,q 1)))
+        ((rosette-asserto `(,r/@equal? ,q 2))))
+      ))
+  '(1 2))
 
 (test "==-and-smt:"
   (run 1 (q)
     (fresh (a b)
       (== a b)
-      (smt-typeo a 'Int) ;
-      (smt-asserto `(= ,a 5))
+      (rosette-typeo a r/@integer?) ;
+      (rosette-asserto `(,r/@equal? ,a 5))
       ))
   '(_.0))
 
@@ -15,9 +80,9 @@
   (run 1 (q)
     (fresh (a b)
       (== a b)
-      (smt-typeo a 'Int)
-      (smt-asserto `(= ,a 5))
-      (smt-typeo b 'Int)
+      (rosette-typeo a r/@integer?)
+      (rosette-asserto `(,r/@equal? ,a 5))
+      (rosette-typeo b r/@integer?)
       ))
   '(_.0))
 
@@ -26,11 +91,11 @@
   (run 3 (q)
     (conde
       ((fresh (x)
-         (smt-typeo x 'Int)
-         (smt-asserto `(= ,x 1))))
+         (rosette-typeo x r/@integer?)
+         (rosette-asserto `(,r/@equal? ,x 1))))
       ((fresh (x)
-         (smt-typeo x 'Int)
-         (smt-asserto `(= ,x 2))))
+         (rosette-typeo x r/@integer?)
+         (rosette-asserto `(,r/@equal? ,x 2))))
       ))
   '(_.0 _.0))
 
@@ -38,10 +103,10 @@
 (test "==-and-smt: duplicate declare in conde, and fix a bug when gc-assumption-threshold = 1"
   (run 3 (q)
     (conde
-      ((smt-typeo q 'Int)
-       (smt-asserto `(= ,q 1)))
-      ((smt-typeo q 'Int)
-       (smt-asserto `(= ,q 2)))
+      ((rosette-typeo q r/@integer?)
+       (rosette-asserto `(,r/@equal? ,q 1)))
+      ((rosette-typeo q r/@integer?)
+       (rosette-asserto `(,r/@equal? ,q 2)))
       ))
   '(1 2))
 
@@ -50,8 +115,8 @@
   (run 1 (q)
     (fresh (a b)
       (== a b)
-      (smt-typeo a 'Bool)
-      (smt-asserto `(= ,a #f))
+      (rosette-typeo a r/@boolean?)
+      (rosette-asserto `(,r/@equal? ,a #f))
       (== q `(,a ,b))))
   '((#f #f)))
 
@@ -64,13 +129,13 @@
   (define add1o
     (lambda (n out)
       (fresh ()
-        (smt-asserto `(= ,out (+ ,n 1))))))
+        (rosette-asserto `(,r/@= ,out (,r/@+ ,n 1))))))
 
   (test ""
     (run 5 (q)
       (fresh (n out)
-        (smt-typeo n 'Int)
-        (smt-typeo out 'Int)
+        (rosette-typeo n r/@integer?)
+        (rosette-typeo out r/@integer?)
         (add1o n out)
         (== q `(,n ,out))))
     '((0 1) (1 2) (2 3) (3 4) (4 5)))
@@ -78,7 +143,7 @@
   (test ""
     (run 5 (q)
       (fresh (n)
-        (smt-typeo n 'Int)
+        (rosette-typeo n r/@integer?)
         (add1o n 1)
         (== q n)))
     '(0))
@@ -86,11 +151,10 @@
   (test ""
     (run 5 (q)
       (fresh (out)
-        (smt-typeo out 'Int)
+        (rosette-typeo out r/@integer?)
         (add1o 1 out)
         (== q out)))
     '(2))
-
   )
 
 (let ()
@@ -98,9 +162,9 @@
   (define add1o
     (lambda (n out)
       (fresh ()
-        (smt-typeo n 'Int)
-        (smt-typeo out 'Int)
-        (smt-asserto `(= ,out (+ ,n 1))))))
+        (rosette-typeo n r/@integer?)
+        (rosette-typeo out r/@integer?)
+        (rosette-asserto `(,r/@= ,out (,r/@+ ,n 1))))))
 
   (test ""
     (run 5 (q)
@@ -126,20 +190,20 @@
   (test ""
     (run 1 (q)
       (fresh (a b)
-        (smt-typeo a 'Int)
-        (smt-asserto `(= ,a 5))
-        
-        (smt-typeo b 'Int)
-        (smt-asserto `(= ,b 6))
-        
+        (rosette-typeo a r/@integer?)
+        (rosette-asserto `(,r/@= ,a 5))
+
+        (rosette-typeo b r/@integer?)
+        (rosette-asserto `(,r/@= ,b 6))
+
         (== a b) ; <-- promote the `==` to SMT assert
-        
+
         (nevero)))
     '())
   )
 
 (let ()
-  
+
   (define (nevero)
     (conde
       [(== 1 2)]
@@ -149,13 +213,13 @@
     (run 1 (q)
       (fresh (a b)
         (=/= a b)
-        
-        (smt-typeo a 'Int)
-        (smt-asserto `(= ,a 5))
-        
-        (smt-typeo b 'Int)
-        (smt-asserto `(= ,b 5)) ; <-- promote the above `=/=` to SMT assert
-        
+
+        (rosette-typeo a r/@integer?)
+        (rosette-asserto `(,r/@= ,a 5))
+
+        (rosette-typeo b r/@integer?)
+        (rosette-asserto `(,r/@= ,b 5)) ; <-- promote the above `=/=` to SMT assert
+
         (nevero)))
     '())
 
@@ -163,11 +227,14 @@
     (run 3 (q)
       (fresh (a b)
         (=/= a b)
-        (smt-typeo a 'Int)
-        (smt-asserto `(= ,a 5)) ; <-- won't actually promote the above `=/=` to SMT assert, because b is not a SMT variable
+        (rosette-typeo a r/@integer?)
+        (rosette-asserto `(,r/@= ,a 5)) ; <-- won't actually promote the above `=/=` to SMT assert, because b is not a SMT variable
         (== q `(,a ,b))))
     '(((5 _.0) (=/= ((_.0 5))))))
   )
+
+
+
 
 (let ()
   (define (nevero)
@@ -179,14 +246,14 @@
     (run 1 (q)
       (fresh (a b)
 
-        (smt-typeo a 'Int)
-        (smt-asserto `(= ,a 5))
+        (rosette-typeo a r/@integer?)
+        (rosette-asserto `(,r/@= ,a 5))
 
-        (smt-typeo b 'Int)
-        (smt-asserto `(= ,b 5))
-        
+        (rosette-typeo b r/@integer?)
+        (rosette-asserto `(,r/@= ,b 5))
+
         (=/= a b) ; <-- promote the `=/=` to SMT assert 
-        
+
         (nevero)))
     '())
 
@@ -194,15 +261,15 @@
     (run 1 (q)
       (fresh (a b)
         (=/= a b)
-        (smt-typeo a 'Int)
-        (smt-typeo b 'Int)
-        (smt-asserto `(= (- ,a ,b) 0))  ; <-- promote the above `=/=` to SMT assert 
+        (rosette-typeo a r/@integer?)
+        (rosette-typeo b r/@integer?)
+        (rosette-asserto `(,r/@= (,r/@- ,a ,b) 0))  ; <-- promote the above `=/=` to SMT assert 
         ))
     '())
   )
 
 (let ()
-  
+
   (define (nevero)
     (conde
       [(== 1 2)]
@@ -213,14 +280,14 @@
       (fresh (a b c d)
         (=/= (list a b) (list c d))
 
-        (smt-typeo a 'Int)
-        (smt-typeo c 'Int)
-        (smt-asserto `(< ,a 2))
-        (smt-asserto `(> ,a 0))
-        (smt-asserto `(= ,c 1))
+        (rosette-typeo a r/@integer?)
+        (rosette-typeo c r/@integer?)
+        (rosette-asserto `(,r/@< ,a 2))
+        (rosette-asserto `(,r/@> ,a 0))
+        (rosette-asserto `(,r/@= ,c 1))
 
         (== b d)
-        
+
         (nevero)
         ))
     '())
@@ -232,12 +299,12 @@
     (fresh (a b c d e f)
       (=/= (list a b c) (list d e f))
 
-      (smt-typeo b 'Int)
-      (smt-typeo e 'Int)
-      (smt-asserto `(< ,b 2))
-      (smt-asserto `(> ,b 0))
-      (smt-asserto `(= ,e 1))
-      
+      (rosette-typeo b r/@integer?)
+      (rosette-typeo e r/@integer?)
+      (rosette-asserto `(,r/@< ,b 2))
+      (rosette-asserto `(,r/@> ,b 0))
+      (rosette-asserto `(,r/@= ,e 1))
+
       (== a d)
       (== c f)
       ))
@@ -248,14 +315,14 @@
     (fresh (a b c d e f)
       (=/= (list a b c) (list d e f))
 
-      (smt-typeo b 'Int)
-      (smt-typeo e 'Int)
-      (smt-asserto `(< ,b 2))
-      (smt-asserto `(> ,b 0))
-      (smt-asserto `(= ,e 1))
-      
+      (rosette-typeo b r/@integer?)
+      (rosette-typeo e r/@integer?)
+      (rosette-asserto `(,r/@< ,b 2))
+      (rosette-asserto `(,r/@> ,b 0))
+      (rosette-asserto `(,r/@= ,e 1))
+
       (== a d)
-      
+
       (== q `((,a ,b ,c) (,d ,e ,f)))
       ))
   '((((_.0 1 _.1) (_.0 1 _.2)) (=/= ((_.1 _.2))))))
@@ -311,120 +378,128 @@
 (test "==-and-smt: type propagration"
   (run 1 (q)
     (fresh (a b)
-      (smt-typeo a 'Int)
-      (smt-asserto `(= ,a 5))
-      
+      (rosette-typeo a r/@integer?)
+      (rosette-asserto `(,r/@= ,a 5))
+
       (== a b)
       (== q `(,a ,b))))
   '((5 5)))
 
 
-;; smt-typeo is not z/
-(test "smt-typeo-0"
+;; TODO:
+;; 1. rosette variable but no assertion, shoud we label it by r/purge?
+;; 2. implement reifier with rosette constraint
+(test "rosette-typeo-0"
   (run 3 (q)
-    (smt-typeo q 'Int))
+    (rosette-typeo q r/@integer?))
   '(0 2 3))
 
 ;; ex1
-(test "smt-typeo-1"
+(test "rosette-typeo-1"
   (run 3 (q)
     (fresh (a b)
-      (smt-typeo a 'Int)
+      (rosette-typeo a r/@integer?)
       (== a #f)
       ))
   '())
 
-(test "smt-typeo-2"
+(test "rosette-typeo-2"
   (run 3 (q)
     (fresh (a b)
-      (smt-typeo a 'Int)
-      (smt-typeo b 'Bool)
+      (rosette-typeo a r/@integer?)
+      (rosette-typeo b r/@boolean?)
       (== a b)
       ))
   '())
 
-(test "smt-typeo-3"
+(test "rosette-typeo-3"
   (run 3 (q)
     (fresh (a b)
-      (smt-typeo a 'Int)
-      (smt-typeo b 'Bool)
+      (rosette-typeo a r/@integer?)
+      (rosette-typeo b r/@boolean?)
       (== a b)
       ))
   '())
 
-(test "smt-typeo-4"
+;; TODO:
+;; 1. rosette variable but no assertion, shoud we label it by r/purge?
+;; 2. implement reifier with rosette constraint
+(test "rosette-typeo-4"
   (run 3 (q)
     (fresh (a b) 
-      (smt-typeo b 'Int)
+      (rosette-typeo b r/@integer?)
       (== a b)
       ))
   '(_.0 _.0 _.0))
 
-(test "smt-typeo-5"
+(test "rosette-typeo-5"
   (run 3 (q)
     (fresh (a b)
-      (smt-typeo b 'Bool)
+      (rosette-typeo b r/@boolean?)
       (== a b)
-      (smt-typeo a 'Int)
+      (rosette-typeo a r/@integer?)
       ))
   '())
 
-(test "smt-typeo-6"
+(test "rosette-typeo-6"
   (run 3 (q)
     (fresh (a b)
-      (smt-typeo b 'Bool)
+      (rosette-typeo b r/@boolean?)
       (== a b)
       (== a 1)
       ))
   '())
 
 ;; ex2
-(test "smt-typeo-7"
+(test "rosette-typeo-7"
   (run 3 (q)
     (fresh (a)
-      (smt-typeo a 'Int)
+      (rosette-typeo a r/@integer?)
       (symbolo a)))
   '())
 
-(test "smt-typeo-8"
+(test "rosette-typeo-8"
   (run 3 (q)
     (fresh (a)
       (symbolo a)
-      (smt-typeo a 'Int)
+      (rosette-typeo a r/@integer?)
       ))
   '())
 
-(test "smt-typeo-9"
+;; TODO:
+;; 1. rosette variable but no assertion, shoud we label it by r/purge?
+;; 2. implement reifier with rosette constraint
+(test "rosette-typeo-9"
   (run 3 (q)
     (fresh (a)
       (numbero a)
-      (smt-typeo a 'Int)
+      (rosette-typeo a r/@integer?)
       ))
   '(_.0 _.0 _.0))
 
-(test "smt-typeo-10"
+(test "rosette-typeo-10"
   (run 3 (q)
     (fresh (a)
-      (smt-typeo a 'Int)
+      (rosette-typeo a r/@integer?)
       (numbero a)
       ))
   '(_.0 _.0 _.0))
+;; test fail
 
-
-(test "smt-typeo-11"
+(test "rosette-typeo-11"
   (run 3 (q)
     (fresh (a)
-      (smt-typeo a 'Int)
-      (smt-typeo a 'Real)
+      (rosette-typeo a r/@integer?)
+      (rosette-typeo a r/@real?)
       ))
   '())
 
-(test "smt-typeo-12"
+(test "rosette-typeo-12"
   (run 3 (q)
     (fresh (a)
       (numbero a)
-      (smt-typeo a 'Int)
-      (smt-typeo a 'Real)
+      (rosette-typeo a r/@integer?)
+      (rosette-typeo a r/@real?)
       ))
   '())
 
@@ -432,37 +507,40 @@
 (test "conde-1"
   (run 3 (q)
     (conde
-      ((smt-typeo q 'Int)
-       (smt-asserto `(= ,q 1)))
-      ((smt-typeo q 'Bool)
-       (smt-asserto `(= ,q #t)))
+      ((rosette-typeo q r/@integer?)
+       (rosette-asserto `(,r/@equal? ,q 1)))
+      ((rosette-typeo q r/@boolean?)
+       (rosette-asserto `(,r/@equal? ,q #t)))
       ))
   '(1 #t))
 
-(test "conde-1: qualified identifiers"
-  (run 3 (q)
-    (conde
-      ((smt-typeo q 'Int)
-       (smt-asserto `(= (as ,q Int)  1)))
-      ((smt-typeo q 'Bool)
-       (smt-asserto `(= (as ,q Bool) #t)))
-      ))
-  '(1 #t))
 
+
+;; TODO:
+;; z3 return model is inexact 2.0, but rosette cast it to exact 2, I don't know why?
+;; It might be a bug in rosette, because
+;; 1. dec.rkt doesn't check result type from model, it only look value...
+;; 2. rosette cast inexact 2.0 to exact 2 (magbe use exact-integer? to check)
 (test "conde-2"
   (run 3 (q)
     (conde
-      ((smt-typeo q 'Int)
-       (smt-asserto `(= ,q 1)))
-      ((smt-typeo q 'Real)
-       (smt-asserto `(= ,q 2.0)))
+      ((rosette-typeo q r/@integer?)
+       (rosette-asserto `(,r/@equal? ,q 1)))
+      ((rosette-typeo q r/@real?)
+       (rosette-asserto `(,r/@equal? ,q 2.0)))
       ))
   '(1 2.0))
+
+(test "inexact-integer?"
+  (run 3 (q)
+    (rosette-typeo q r/@real?)
+    (rosette-asserto `(,r/@equal? ,q 2.0)))
+  '(2.0))
 
 (test "=/=-promotion-1"
   (run 1 (q)
     (fresh (x y)
-      (smt-typeo x 'Int)
+      (rosette-typeo x r/@integer?)
       (=/= x 1)
       (=/= x 2)
       ))
@@ -471,7 +549,7 @@
 (test "=/=-promotion-2"
   (run 1 (q)
     (fresh (x y)
-      (smt-typeo x 'Int)
-      (smt-typeo y 'Bool)
+      (rosette-typeo x r/@integer?)
+      (rosette-typeo y r/@boolean?)
       (=/= x y)))
   '(_.0))

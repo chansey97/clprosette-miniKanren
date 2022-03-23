@@ -1,7 +1,36 @@
 #lang racket
-(require "./mk.rkt")
-(require "./test-check.rkt")
-(require "./full-interp-extended.rkt")
+(require "../rosette/rosette/base/core/term.rkt")
+(require "../rosette/rosette/base/core/type.rkt")
+(require "../rosette/rosette/base/form/define.rkt")
+
+(require "../rosette/rosette/solver/solver.rkt")
+(require "../rosette/rosette/solver/solution.rkt")
+(require "../rosette/rosette/solver/smt/z3.rkt")
+(require (only-in "../rosette/rosette/solver/smt/server.rkt" output-smt))
+
+(require (prefix-in r/ "../rosette/rosette/base/core/equality.rkt"))
+(require (prefix-in r/ "../rosette/rosette/base/core/bool.rkt"))
+(require (prefix-in r/ "../rosette/rosette/base/core/real.rkt"))
+
+(require "../rosette/rosette/query/core.rkt") ; current-solver
+;; (require "../rosette/rosette/query/finitize.rkt")
+
+(require "logging.rkt")
+(require "test-check.rkt")
+(require "mk.rkt")
+(require "full-interp-extended.rkt")
+
+;; (current-bitwidth 8)
+;; (output-smt #t)
+(current-solver
+ (z3
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
 
 (test "evalo-simple-let-a"
       (run* (q)
@@ -111,8 +140,8 @@
 (test "evalo-symbolic-execution-d"
       (run 1 (q)
            (fresh (alpha beta gamma vals)
-                  (smt-typeo beta 'Int)
-                  (smt-asserto `(not (= 0 ,beta)))
+                  (rosette-typeo beta r/@integer?)
+                  (rosette-asserto `(,r/@! (,r/@= 0 ,beta)))
                   (== (list alpha beta gamma vals) q)
                   (evalo `(let ((a ',alpha))
                             (let ((b ',beta))
@@ -135,8 +164,8 @@
 (test "evalo-symbolic-execution-e"
       (run 1 (q)
            (fresh (alpha beta gamma vals)
-                  (smt-typeo alpha 'Int)
-                  (smt-asserto `(not (= 0 ,alpha)))
+                  (rosette-typeo alpha r/@integer?)
+                  (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
                   (== (list alpha beta gamma vals) q)
                   (evalo `(let ((a ',alpha))
                             (let ((b ',beta))
@@ -189,8 +218,8 @@
 (test "evalo-symbolic-execution-g"
       (run 8 (q)
            (fresh (alpha beta gamma vals)
-                  (smt-typeo beta 'Int)
-                  (smt-asserto `(not (= 0 ,beta)))
+                  (rosette-typeo beta r/@integer?)
+                  (rosette-asserto `(,r/@! (,r/@= 0 ,beta)))
                   (== (list alpha beta gamma vals) q)
                   (evalo `((lambda (a b c)
                              (let ((x (if (!= a 0)
@@ -219,8 +248,8 @@
 (test "evalo-symbolic-execution-h"
       (run* (q)
             (fresh (alpha beta gamma vals)
-                   (smt-typeo alpha 'Int)
-                   (smt-asserto `(not (= 0 ,alpha)))
+                   (rosette-typeo alpha r/@integer?)
+                   (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
                    (== (list alpha beta gamma vals) q)
                    (evalo `((lambda (a b c)
                               (let ((x (if (!= a 0)
@@ -276,8 +305,8 @@
 (test "evalo-symbolic-execution-j"
       (run 8 (q)
            (fresh (alpha beta gamma vals)
-                  (smt-typeo beta 'Int)
-                  (smt-asserto `(not (= 0 ,beta)))
+                  (rosette-typeo beta r/@integer?)
+                  (rosette-asserto `(,r/@! (,r/@= 0 ,beta)))
                   (== (list alpha beta gamma vals) q)
                   (evalo `((lambda (a b c)
                              ((lambda (x y z)
@@ -310,8 +339,8 @@
 (test "evalo-symbolic-execution-k"
       (run* (q)
             (fresh (alpha beta gamma vals)
-                   (smt-typeo alpha 'Int)
-                   (smt-asserto `(not (= 0 ,alpha)))
+                   (rosette-typeo alpha r/@integer?)
+                   (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
                    (== (list alpha beta gamma vals) q)
                    (evalo `((lambda (a b c)
                               ((lambda (x y z)
