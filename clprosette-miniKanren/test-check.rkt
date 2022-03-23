@@ -1,4 +1,10 @@
+#lang racket
+(provide (all-defined-out))
+
 (define test-failed #f)
+
+(define (set-test-failed val)
+  (set! test-failed val))
 
 (define-syntax test
   (syntax-rules ()
@@ -9,7 +15,7 @@
               (produced tested-expression))
          (or (equal? expected produced)
              (begin
-               (set! test-failed #t)
+               (set-test-failed #t)
                (printf "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
                        'tested-expression expected produced))))))))
 

@@ -1,3 +1,6 @@
+#lang racket
+(require "../mk.rkt")
+(require "../test-check.rkt")
 
 (test "==-and-smt:"
       (run 1 (q)
@@ -49,159 +52,173 @@
                   (== q `(,a ,b))))
       '((#f #f)))
 
-;; https://github.com/namin/clpsmt-miniKanren/issues/10
+(let ()
+    ;; https://github.com/namin/clpsmt-miniKanren/issues/10
 
-;; Declare a fresh variable at the top
-(define add1o
-  (lambda (n out)
-    (fresh ()
-           (smt-asserto `(= ,out (+ ,n 1))))))
+    ;; Declare a fresh variable at the top
+    (define add1o
+      (lambda (n out)
+        (fresh ()
+               (smt-asserto `(= ,out (+ ,n 1))))))
 
-(test ""
-      (run 5 (q)
-           (fresh (n out)
-                  (smt-typeo n 'Int)
-                  (smt-typeo out 'Int)
-                  (add1o n out)
-                  (== q `(,n ,out))))
-      '((0 1) (1 2) (2 3) (3 4) (4 5)))
+    (test ""
+          (run 5 (q)
+               (fresh (n out)
+                      (smt-typeo n 'Int)
+                      (smt-typeo out 'Int)
+                      (add1o n out)
+                      (== q `(,n ,out))))
+          '((0 1) (1 2) (2 3) (3 4) (4 5)))
 
-(test ""
-      (run 5 (q)
-           (fresh (n)
-                  (smt-typeo n 'Int)
-                  (add1o n 1)
-                  (== q n)))
-      '(0))
+    (test ""
+          (run 5 (q)
+               (fresh (n)
+                      (smt-typeo n 'Int)
+                      (add1o n 1)
+                      (== q n)))
+          '(0))
 
-(test ""
-      (run 5 (q)
-           (fresh (out)
-                  (smt-typeo out 'Int)
-                  (add1o 1 out)
-                  (== q out)))
-      '(2))
+    (test ""
+          (run 5 (q)
+               (fresh (out)
+                      (smt-typeo out 'Int)
+                      (add1o 1 out)
+                      (== q out)))
+          '(2))
+  )
 
-;; Declare a variable, but that variable has already been unified with a constant.
-(define add1o
-  (lambda (n out)
-    (fresh ()
-           (smt-typeo n 'Int)
-           (smt-typeo out 'Int)
-           (smt-asserto `(= ,out (+ ,n 1))))))
+(let ()
+    ;; Declare a variable, but that variable has already been unified with a constant.
+    (define add1o
+      (lambda (n out)
+        (fresh ()
+               (smt-typeo n 'Int)
+               (smt-typeo out 'Int)
+               (smt-asserto `(= ,out (+ ,n 1))))))
 
-(test ""
-      (run 5 (q)
-           (fresh (n out)
-                  (add1o n out)
-                  (== q `(,n ,out))))
-      '((0 1) (-1 0) (-2 -1) (-3 -2) (-4 -3)))
+    (test ""
+          (run 5 (q)
+               (fresh (n out)
+                      (add1o n out)
+                      (== q `(,n ,out))))
+          '((0 1) (-1 0) (-2 -1) (-3 -2) (-4 -3)))
 
-(test ""
-      (run 5 (q)
-           (fresh (n)
-                  (add1o n 1)
-                  (== q n)))
-      '(0))
+    (test ""
+          (run 5 (q)
+               (fresh (n)
+                      (add1o n 1)
+                      (== q n)))
+          '(0))
+  )
 
-(define (nevero)
-  (conde
-   [(== 1 2)]
-   [(nevero)]))
+(let ()
+    (define (nevero)
+      (conde
+       [(== 1 2)]
+       [(nevero)]))
 
-(test ""
-      (run 1 (q)
-           (fresh (a b)
-                  (smt-typeo a 'Int)
-                  (smt-asserto `(= ,a 5))
-                  
-                  (smt-typeo b 'Int)
-                  (smt-asserto `(= ,b 6))
-                  
-                  (== a b) ; <-- promote the `==` to SMT assert
-                  
-                  (nevero)))
-      '())
+    (test ""
+          (run 1 (q)
+               (fresh (a b)
+                      (smt-typeo a 'Int)
+                      (smt-asserto `(= ,a 5))
 
-(define (nevero)
-  (conde
-   [(== 1 2)]
-   [(nevero)]))
+                      (smt-typeo b 'Int)
+                      (smt-asserto `(= ,b 6))
 
-(test ""
-      (run 1 (q)
-           (fresh (a b)
-                  (=/= a b)
-                  
-                  (smt-typeo a 'Int)
-                  (smt-asserto `(= ,a 5))
-                  
-                  (smt-typeo b 'Int)
-                  (smt-asserto `(= ,b 5)) ; <-- promote the above `=/=` to SMT assert
-                  
-                  (nevero)))
-      '())
+                      (== a b) ; <-- promote the `==` to SMT assert
 
-(test ""
-      (run 3 (q)
-           (fresh (a b)
-                  (=/= a b)
-                  (smt-typeo a 'Int)
-                  (smt-asserto `(= ,a 5)) ; <-- won't actually promote the above `=/=` to SMT assert, because b is not a SMT variable
-                  (== q `(,a ,b))))
-      '(((5 _.0) (=/= ((_.0 5))))))
+                      (nevero)))
+          '())
+      )
 
-(define (nevero)
-  (conde
-   [(== 1 2)]
-   [(nevero)]))
+(let ()
+  
+    (define (nevero)
+      (conde
+       [(== 1 2)]
+       [(nevero)]))
 
-(test ""
-      (run 1 (q)
-           (fresh (a b)
+    (test ""
+          (run 1 (q)
+               (fresh (a b)
+                      (=/= a b)
 
-                  (smt-typeo a 'Int)
-                  (smt-asserto `(= ,a 5))
+                      (smt-typeo a 'Int)
+                      (smt-asserto `(= ,a 5))
 
-                  (smt-typeo b 'Int)
-                  (smt-asserto `(= ,b 5))
-                  
-                  (=/= a b) ; <-- promote the `=/=` to SMT assert 
-                  
-                  (nevero)))
-      '())
+                      (smt-typeo b 'Int)
+                      (smt-asserto `(= ,b 5)) ; <-- promote the above `=/=` to SMT assert
 
-(test "refute"
-      (run 1 (q)
-           (fresh (a b)
-                  (=/= a b)
-                  (smt-typeo a 'Int)
-                  (smt-typeo b 'Int)
-                  (smt-asserto `(= (- ,a ,b) 0))  ; <-- promote the above `=/=` to SMT assert 
-                  ))
-      '())
+                      (nevero)))
+          '())
 
-(define (nevero)
-  (conde
-   [(== 1 2)]
-   [(nevero)]))
+    (test ""
+          (run 3 (q)
+               (fresh (a b)
+                      (=/= a b)
+                      (smt-typeo a 'Int)
+                      (smt-asserto `(= ,a 5)) ; <-- won't actually promote the above `=/=` to SMT assert, because b is not a SMT variable
+                      (== q `(,a ,b))))
+          '(((5 _.0) (=/= ((_.0 5))))))
+)
 
-(test ""
-      (run 1 (q)
-           (fresh (a b c d)
-                  (=/= (list a b) (list c d))
 
-                  (smt-typeo a 'Int)
-                  (smt-typeo c 'Int)
-                  (smt-asserto `(< ,a 2))
-                  (smt-asserto `(> ,a 0))
-                  (smt-asserto `(= ,c 1))
+(let ()
+    (define (nevero)
+      (conde
+       [(== 1 2)]
+       [(nevero)]))
 
-                  (== b d)
-                  
-                  (nevero)
-                  ))
-      '())
+    (test ""
+          (run 1 (q)
+               (fresh (a b)
+
+                      (smt-typeo a 'Int)
+                      (smt-asserto `(= ,a 5))
+
+                      (smt-typeo b 'Int)
+                      (smt-asserto `(= ,b 5))
+
+                      (=/= a b) ; <-- promote the `=/=` to SMT assert 
+
+                      (nevero)))
+          '())
+
+    (test "refute"
+          (run 1 (q)
+               (fresh (a b)
+                      (=/= a b)
+                      (smt-typeo a 'Int)
+                      (smt-typeo b 'Int)
+                      (smt-asserto `(= (- ,a ,b) 0))  ; <-- promote the above `=/=` to SMT assert 
+                      ))
+          '())
+  )
+
+(let ()
+    (define (nevero)
+      (conde
+       [(== 1 2)]
+       [(nevero)]))
+
+    (test ""
+          (run 1 (q)
+               (fresh (a b c d)
+                      (=/= (list a b) (list c d))
+
+                      (smt-typeo a 'Int)
+                      (smt-typeo c 'Int)
+                      (smt-asserto `(< ,a 2))
+                      (smt-asserto `(> ,a 0))
+                      (smt-asserto `(= ,c 1))
+
+                      (== b d)
+
+                      (nevero)
+                      ))
+          '())
+  )
 
 (test ""
       (run 3 (q)

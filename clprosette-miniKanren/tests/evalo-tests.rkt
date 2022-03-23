@@ -1,3 +1,7 @@
+#lang racket
+(require "../mk.rkt")
+(require "../test-check.rkt")
+(require "../full-interp-extended.rkt")
 (test "fac:"
       (run* (q)
             (evalo `(letrec ((fac

@@ -1,3 +1,8 @@
+#lang racket
+(require srfi/19)
+(require "mk.rkt")
+(provide (all-defined-out))
+
 ;;; streaming run and run* interface
 ;;;
 ;;; prints the answers as they are generated, along with the current answer count, and total elapsed wall time

@@ -1,4 +1,6 @@
-(load "require.scm")
+#lang racket
+(require "../mk.rkt")
+(require "../test-check.rkt")
 
 (define remove-one-elemento
   (lambda (x ls out)

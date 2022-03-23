@@ -1,19 +1,6 @@
-#lang racket/base
-
-(require racket/list
-         racket/include)
-
-(require "../clpsmt-miniKanren/z3-server.rkt")
-
-(provide
- (all-from-out "../clpsmt-miniKanren/z3-server.rkt")
- (all-defined-out))
-;; (provide run run*
-;;          == =/=
-;;          fresh
-;;          conde
-;;          symbolo numbero
-;;          absento)
+#lang racket
+(require "./logging.rkt")
+(provide (all-defined-out))
 
 ;; extra stuff for racket
 ;; due mostly to samth
@@ -73,6 +60,8 @@
     (state (state-S st) (hash-remove (state-C st) v) (state-M st))))
 
 
+;; (include "mk.scm")
+
 ; Scope object.
 ; Used to determine whether a branch has occured between variable
 ; creation and unification to allow the set-var-val! optimization
@@ -110,6 +99,9 @@
 (define unbound (list 'unbound))
 
 (define counter -1)
+
+(define (set-counter! val)
+  (set! counter val))
 
 (define var
   (lambda (scope)
@@ -477,7 +469,7 @@
   (syntax-rules ()
     ((_ n (q) g0 g ...)
      (begin
-       (set! counter -1)
+       (set-counter! -1)
        (z/reset!)
        (take n
              (inc
@@ -1270,7 +1262,7 @@
                         ,move-T-to-D-b/c-t2-atom ,split-t-move-to-d-b/c-pair
                         ,drop-from-D-b/c-T ,drop-t-b/c-t2-occurs-t1)))
 
-
+;; (include "smt.scm")
 
 ;; (define gc-assumption-threshold 10000000)
 ;; (define gc-assumption-threshold 1000) ; original
@@ -1701,7 +1693,6 @@
   (set! assumption-chains '())
   (set! all-assumptions '())
   (set! assumption-count 0)
-  (set! m-subst-map empty-subst-map)
   (set! global-buffer '())
   (set! local-buffer '()))
 (define (z/gc!)
@@ -1784,6 +1775,9 @@
                                st)))))))))
 
 							   
+;; (include "z3-server.scm")
+(define ns (make-base-namespace))
+
 (define z3-counter-check-sat 0)
 (define z3-counter-get-model 0)
 
@@ -1814,11 +1808,12 @@
                     ))
 
 (define (z3-process-start)
-  (open-process-ports (string-append "z3 -in " (fold-right (lambda (x y) (string-append x " " y)) "" z3-params))
-                      'block
-                      (native-transcoder)))
+  (let ((r (process (string-append "z3 -in " (foldr (lambda (x y) (string-append x " " y)) "" z3-params)))))
+    (values (cadr r) (car r) (cadddr r) (caddr r))))
+
 (define-values (z3-out z3-in z3-err z3-p)
   (z3-process-start))
+
 ;; (define (z3-reset!)
 ;;   (let-values (((out in err p)
 ;;                 (z3-process-start)))
@@ -1839,9 +1834,9 @@
     (z3-check-in!)
     (let ([r (read z3-in)])
       (when log-all-calls-with-file
-        (let ((p^ (open-output-file "log.smt" 'append)))
+        (let ((p^ (open-output-file "log.smt" #:exists 'append)))
           (fprintf p^ "~a\n" r)
-          (flush-output-port p^)
+          (flush-output p^)
           (close-output-port p^)))
       (when log-all-calls (printf/debug "read-sat: ~a\n" r))
       (if (eq? r 'sat)
@@ -1857,7 +1852,7 @@
 
 (define (init-log)
   (when log-all-calls-with-file
-    (let ((p (open-output-file "log.smt" 'replace)))
+    (let ((p (open-output-file "log.smt" #:exists 'replace)))
       (close-output-port p))))
 
 ;; TODO: Support other types, e.g. Bitvector, etc.
@@ -1875,15 +1870,15 @@
     (when log-all-calls (printf/debug "call-z3 enter: xs = ~a\n" xs))
     (let ((xs (scheme->smt xs)))
       (when log-all-calls-with-file
-        (let ((p^ (open-output-file "log.smt" 'append)))
+        (let ((p^ (open-output-file "log.smt" #:exists 'append)))
           (for-each (lambda (x)
                       (fprintf p^ "~a\n" x)) xs)
-          (flush-output-port p^)
+          (flush-output p^)
           (close-output-port p^)))
       (for-each (lambda (x)
                   (when log-all-calls (printf/debug "~a\n" x))
                   (fprintf z3-out "~a\n" x)) xs)
-      (flush-output-port z3-out))
+      (flush-output z3-out))
     ))
 
 
@@ -1891,7 +1886,7 @@
   (lambda ()
     (let ([m (read z3-in)])
       (when log-all-calls-with-file
-        (let ((p^ (open-output-file "log.smt" 'append)))
+        (let ((p^ (open-output-file "log.smt" #:exists 'append)))
           (if (eq? z3-version 'z3-4.8.12)
               (if (pair? m)
                   (begin
@@ -1908,7 +1903,7 @@
                                 (fprintf p^ "  ~a\n" x)) (cdr m))
                     (fprintf p^ ")\n"))
                   (fprintf p^ "~a\n" m)))
-          (flush-output-port p^)
+          (flush-output p^)
           (close-output-port p^)))
       (when log-all-calls (printf/debug "~a\n" m))
       (map (lambda (x)
@@ -1919,7 +1914,7 @@
                (let ((val (cond
                             ((eq? val 'false) #f)
                             ((eq? val 'true) #t)
-                            (else (eval val)))))
+                            (else (eval val ns)))))
                  (list id val type))
                ))
            (filter (lambda (x)
