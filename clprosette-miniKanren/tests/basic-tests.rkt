@@ -515,12 +515,6 @@
   '(1 #t))
 
 
-
-;; TODO:
-;; z3 return model is inexact 2.0, but rosette cast it to exact 2, I don't know why?
-;; It might be a bug in rosette, because
-;; 1. dec.rkt doesn't check result type from model, it only look value...
-;; 2. rosette cast inexact 2.0 to exact 2 (magbe use exact-integer? to check)
 (test "conde-2"
   (run 3 (q)
     (conde
