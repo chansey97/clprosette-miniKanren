@@ -57,4 +57,7 @@
     (=/= f g)
     (nevero)
     ))
-;; loop, because no disequality promotion for functions.
+;; '()
+;; added disequality promotion for functions, but we really need it?
+;; typically, users know a variable is a function, or users could check type first?
+;; then use r/@exists to check... 

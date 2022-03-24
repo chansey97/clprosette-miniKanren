@@ -1446,7 +1446,15 @@
 ;; TODO: For r/function? disquality promotion, by r/exists r/@equal?
 (define (add-rosette-disequality D)
   (lambdag@ (st)
-    (let ((as (filter-rosette-ok? st D)))
+    (let* ((as (filter-rosette-ok? st D))
+           (as (map
+                (lambda (cs)
+                  (map
+                   (lambda (ds)
+                     (let ((r-type (get-rosette-type st (car ds))))
+                       (list ds r-type)))
+                   cs))
+                as)))
       (if (not (null? as))
           ((rosette-asserto/internal
             `(,r/@&&
@@ -1454,8 +1462,19 @@
                  (lambda (cs)
                    `(,r/@||
                      ,@(map
-                        (lambda (ds)
-                          `(,r/@! (,r/@equal? ,(car ds) ,(cdr ds))))
+                        (lambda (ds-t)
+                          (let* ((ds (car ds-t))
+                                 (ds-lhs (car ds))
+                                 (ds-rhs (cdr ds))
+                                 (r-type (cadr ds-t)))
+                            (cond
+                              [(r/function? r-type)
+                               ;; TODO: support multiple arguments
+                               (let ((dom (r/function-domain r-type)))
+                                 (define-symbolic* rx (car dom))
+                                 `(,r/@exists (,rx) (,r/@! (,r/@equal? (,ds-lhs ,rx) (,ds-rhs ,rx)))))]
+                              [else
+                               `(,r/@! (,r/@equal? ,ds-lhs ,ds-rhs))])))
                         cs)))
                  as)))
            st)
