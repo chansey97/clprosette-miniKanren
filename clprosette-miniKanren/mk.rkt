@@ -1402,6 +1402,11 @@
   (lambda (u r-type)
     (rosette-typeo/internal u r-type)))
 
+;; TODO:
+;; m is a rosette symbolic, it shoud be truly propagated.
+;; if t is fresh, propagate m -> t (no need create new rosette symbolic and no need assert r/@equal?)
+;; if t is not fresh, assert r/@equal?  (we also can replace the symbolic on t with the symbolic on v, but not necessary)
+;; I will add this optimization, when I have more test-cases.
 (define (add-rosette-equality v t m)
   (lambdag@ (st)
     (bind*
