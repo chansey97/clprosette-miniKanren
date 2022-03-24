@@ -36,8 +36,9 @@
 (run 1 (q)
   (fresh (x)
     (rosette-typeo q r/@boolean?)
-    (rosette-typeo x r/@boolean?)
-    (rosette-asserto `(,r/@forall (,x) (,r/|| ,x ,q)))))
+    (let ()
+      (define-symbolic* rx r/@boolean?)
+      (rosette-asserto `(,r/@forall (,rx) (,r/|| ,rx ,q))))))
 
 ;; A problem of forall:
 ;; In Z3 version 4.8.7, get-model returns
