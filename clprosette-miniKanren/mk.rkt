@@ -1521,7 +1521,7 @@
                 (vs (vars-c st))
                 (vs-M (filter (lambda (v) (c-M (lookup-c v st))) vs))
                 (m (map (lambda (v) (list v (c-M (lookup-c v st)))) vs-M))
-                (m (map (lambda (xs) (list (car xs) (evaluate (cadr xs) sol) )) m))
+                (m (map (lambda (xs) (list (car xs) (evaluate (cadr xs) (complete-solution sol (list (cadr xs)))) )) m))
                 (m (filter (lambda (xs) (not (constant? (cadr xs)))) m)))
            (let ((st (state-with-scope st (new-scope))))
              (mplus*

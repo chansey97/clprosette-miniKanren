@@ -31,23 +31,22 @@
                   ':smt.arith.solver 6 ; default:6 in z3-4.8.12
                   )))
 
-;; TODO:
-;; 1. rosette variable but no assertion, shoud we label it by r/purge?
-;; 2. implement reifier with rosette constraint
-(run 1 (q)
-  (fresh ()
-    (rosette-typeo q r/@integer?)
-    ))
-;; (_.0)
+(test "rosette-typeo-without-assertion"
+  (run 1 (q)
+    (fresh ()
+      (rosette-typeo q r/@integer?)
+      ))
+  '(0))
 
-(run 5 (q)
-  (fresh (a b)
-    (rosette-typeo a r/@integer?)
-    (rosette-typeo b r/@integer?)
-    (rosette-asserto `(,r/@>= ,b 0))
-    (== q `(,a ,b))
-    ))
-;; ((_.0 0) (_.0 1) (_.0 2) (_.0 3) (_.0 4))
+(test "rosette-typeo-without-assertion-2"
+  (run 5 (q)
+    (fresh (a b)
+      (rosette-typeo a r/@integer?)
+      (rosette-typeo b r/@integer?)
+      (rosette-asserto `(,r/@>= ,b 0))
+      (== q `(,a ,b))
+      ))
+  '((0 0) (-1 1) (-2 2) (1 0) (-3 0)))
 
 (test "basic"
   (run 1 (q)
@@ -386,9 +385,6 @@
   '((5 5)))
 
 
-;; TODO:
-;; 1. rosette variable but no assertion, shoud we label it by r/purge?
-;; 2. implement reifier with rosette constraint
 (test "rosette-typeo-0"
   (run 3 (q)
     (rosette-typeo q r/@integer?))
@@ -421,9 +417,6 @@
       ))
   '())
 
-;; TODO:
-;; 1. rosette variable but no assertion, shoud we label it by r/purge?
-;; 2. implement reifier with rosette constraint
 (test "rosette-typeo-4"
   (run 3 (q)
     (fresh (a b) 
@@ -466,9 +459,6 @@
       ))
   '())
 
-;; TODO:
-;; 1. rosette variable but no assertion, shoud we label it by r/purge?
-;; 2. implement reifier with rosette constraint
 (test "rosette-typeo-9"
   (run 3 (q)
     (fresh (a)
