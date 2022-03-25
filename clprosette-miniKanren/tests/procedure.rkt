@@ -50,10 +50,10 @@
 
     (let ()
       (define-symbolic* rx r/@boolean?)
-      (rosette-asserto `(,r/@forall (,rx) (,r/@equal? (,f ,rx) (,h ,rx)))))
+      (rosette-asserto `(,r/@forall (,rx) (,r/@equal? (,f ,rx) (,h ,rx))))) ; <-- here let's body can only have one goal 
     (let ()
       (define-symbolic* rx r/@boolean?)
-      (rosette-asserto `(,r/@forall (,rx) (,r/@equal? (,g ,rx) (,h ,rx)))))
+      (rosette-asserto `(,r/@forall (,rx) (,r/@equal? (,g ,rx) (,h ,rx))))) ; <-- here let's body can only have one goal 
     (=/= f g)
     (nevero)
     ))
