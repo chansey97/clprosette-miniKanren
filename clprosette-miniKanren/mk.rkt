@@ -1,21 +1,5 @@
 #lang racket
-(require "../rosette/rosette/base/core/term.rkt")
-(require "../rosette/rosette/base/core/type.rkt")
-
-(require "../rosette/rosette/base/form/define.rkt")
-
-(require "../rosette/rosette/solver/solver.rkt")
-(require "../rosette/rosette/solver/solution.rkt")
-(require "../rosette/rosette/solver/smt/z3.rkt")
-
-(require (prefix-in r/ "../rosette/rosette/base/core/bool.rkt"))
-(require (prefix-in r/ "../rosette/rosette/base/core/equality.rkt"))
-(require (prefix-in r/ "../rosette/rosette/base/core/real.rkt"))
-(require (prefix-in r/ "../rosette/rosette/base/core/function.rkt"))
-
-(require "../rosette/rosette/query/eval.rkt")
-(require "../rosette/rosette/query/core.rkt") ; current-solver
-
+(require "./rosette-bridge.rkt")
 (require "./logging.rkt")
 (provide (all-defined-out))
 

@@ -1,23 +1,8 @@
 #lang racket
-(require "../../../../rosette/rosette/base/core/term.rkt")
-(require "../../../../rosette/rosette/base/core/type.rkt")
-(require "../../../../rosette/rosette/base/form/define.rkt")
-
-(require "../../../../rosette/rosette/solver/solver.rkt")
-(require "../../../../rosette/rosette/solver/solution.rkt")
-(require "../../../../rosette/rosette/solver/smt/z3.rkt")
-(require (only-in "../../../../rosette/rosette/solver/smt/server.rkt" output-smt))
-
-(require (prefix-in r/ "../../../../rosette/rosette/base/core/equality.rkt"))
-(require (prefix-in r/ "../../../../rosette/rosette/base/core/bool.rkt"))
-(require (prefix-in r/ "../../../../rosette/rosette/base/core/real.rkt"))
-
-(require "../../../../rosette/rosette/query/core.rkt") ; current-solver
-;; (require "../../../../rosette/rosette/query/finitize.rkt")
-
-(require "../../../logging.rkt")
-(require "../../../test-check.rkt")
+(require "../../../rosette-bridge.rkt")
 (require "../../../mk.rkt")
+(require "../../../test-check.rkt")
+(require "../../../logging.rkt")
 
 ;; (current-bitwidth 8)
 ;; (output-smt "./")
