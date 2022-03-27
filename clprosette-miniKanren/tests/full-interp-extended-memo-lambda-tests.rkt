@@ -11,703 +11,703 @@
 ;; b -> a
 ;; b -> d
 (test "reachable-1"
-      (run 3 (q)
-           (evalo `(letrec ((arc (lambda (x)
-                                   (if (equal? 'a x)
-                                       'b
-                                       (if (equal? 'b x)
-                                           (amb 'a 'd)
-                                           'error))))
-                            (reachable (lambda (x)
-                                         (let ((a (arc x)))
-                                           (if (equal? 'error a)
-                                               'error
-                                               (amb a
-                                                    (reachable a)))))))
-                     (reachable 'a))
-                  q))
-      '(b a d))
+  (run 3 (q)
+    (evalo `(letrec ((arc (lambda (x)
+                            (if (equal? 'a x)
+                                'b
+                                (if (equal? 'b x)
+                                    (amb 'a 'd)
+                                    'error))))
+                     (reachable (lambda (x)
+                                  (let ((a (arc x)))
+                                    (if (equal? 'error a)
+                                        'error
+                                        (amb a
+                                             (reachable a)))))))
+              (reachable 'a))
+           q))
+  '(b a d))
 
 ;; a -> b
 ;; b -> a
 ;; b -> d
 (test "reachable-2a"
-      (run 10 (q)
-           (evalo `(letrec ((arc (lambda (x)
-                                   (if (equal? 'a x)
-                                       'b
-                                       (if (equal? 'b x)
-                                           (amb 'a 'd)
-                                           'error))))
-                            (reachable (lambda (x)
-                                         (let ((a (arc x)))
-                                           (if (equal? 'error a)
-                                               'error
-                                               (amb a
-                                                    (reachable a)))))))
-                     (reachable 'a))
-                  q))
-      '(b a d b error a d b error a))
+  (run 10 (q)
+    (evalo `(letrec ((arc (lambda (x)
+                            (if (equal? 'a x)
+                                'b
+                                (if (equal? 'b x)
+                                    (amb 'a 'd)
+                                    'error))))
+                     (reachable (lambda (x)
+                                  (let ((a (arc x)))
+                                    (if (equal? 'error a)
+                                        'error
+                                        (amb a
+                                             (reachable a)))))))
+              (reachable 'a))
+           q))
+  '(b a d b error a d b error a))
 
 ;; a -> b
 ;; b -> a
 ;; b -> d
 (test "reachable-2b"
-      (run 10 (q)
-           (evalo `(let ((arc (lambda (x)
-                                (if (equal? 'a x)
-                                    'b
-                                    (if (equal? 'b x)
-                                        (amb 'a 'd)
-                                        'error)))))
-                     (letrec ((reachable (lambda (x)
-                                           (let ((a (arc x)))
-                                             (if (equal? 'error a)
-                                                 'error
-                                                 (amb a
-                                                      (reachable a)))))))
-                       (reachable 'a)))
-                  q))
-      '(b a d b error a d b error a))
+  (run 10 (q)
+    (evalo `(let ((arc (lambda (x)
+                         (if (equal? 'a x)
+                             'b
+                             (if (equal? 'b x)
+                                 (amb 'a 'd)
+                                 'error)))))
+              (letrec ((reachable (lambda (x)
+                                    (let ((a (arc x)))
+                                      (if (equal? 'error a)
+                                          'error
+                                          (amb a
+                                               (reachable a)))))))
+                (reachable 'a)))
+           q))
+  '(b a d b error a d b error a))
 
 ;; a -> b
 ;; b -> a
 ;; b -> d
 (test "reachable-3a"
-      (run 10 (q)
-           (evalo `(letrec ((arc (lambda (x)
-                                   (if (equal? 'a x)
-                                       'b
-                                       (if (equal? 'b x)
-                                           (amb 'a 'd)
-                                           'error))))
-                            (reachable (lambda (x)
-                                         (let ((a (arc x)))
-                                           (if (equal? 'error a)
-                                               'error
-                                               (amb a
-                                                    (reachable a)))))))
-                     (let ((x (reachable 'a)))
-                       (begin
-                         (require (not (equal? 'error x)))
-                         x)))
-                  q))
-      '(b a d b a d b a d b))
+  (run 10 (q)
+    (evalo `(letrec ((arc (lambda (x)
+                            (if (equal? 'a x)
+                                'b
+                                (if (equal? 'b x)
+                                    (amb 'a 'd)
+                                    'error))))
+                     (reachable (lambda (x)
+                                  (let ((a (arc x)))
+                                    (if (equal? 'error a)
+                                        'error
+                                        (amb a
+                                             (reachable a)))))))
+              (let ((x (reachable 'a)))
+                (begin
+                  (require (not (equal? 'error x)))
+                  x)))
+           q))
+  '(b a d b a d b a d b))
 
 ;; a -> b
 ;; b -> a
 ;; b -> d
 (test "reachable-3b"
-      (run 10 (q)
-           (evalo `(let ((arc (lambda (x)
-                                (if (equal? 'a x)
-                                    'b
-                                    (if (equal? 'b x)
-                                        (amb 'a 'd)
-                                        'error)))))
-                     (letrec ((reachable (lambda (x)
-                                           (let ((a (arc x)))
-                                             (if (equal? 'error a)
-                                                 'error
-                                                 (amb a
-                                                      (reachable a)))))))
-                       (let ((x (reachable 'a)))
-                         (begin
-                           (require (not (equal? 'error x)))
-                           x))))
-                  q))
-      '(b a d b a d b a d b))
+  (run 10 (q)
+    (evalo `(let ((arc (lambda (x)
+                         (if (equal? 'a x)
+                             'b
+                             (if (equal? 'b x)
+                                 (amb 'a 'd)
+                                 'error)))))
+              (letrec ((reachable (lambda (x)
+                                    (let ((a (arc x)))
+                                      (if (equal? 'error a)
+                                          'error
+                                          (amb a
+                                               (reachable a)))))))
+                (let ((x (reachable 'a)))
+                  (begin
+                    (require (not (equal? 'error x)))
+                    x))))
+           q))
+  '(b a d b a d b a d b))
 
 ;; a -> b
 ;; b -> a
 ;; b -> d
 (test "memod-reachable-2"
-      (run* (q)
-            (evalo `(letrec ((arc (lambda (x)
-                                    (if (equal? 'a x)
-                                        'b
-                                        (if (equal? 'b x)
-                                            (amb 'a 'd)
-                                            'error))))
-                             (reachable (memo-lambda reachable (x)
-                                                     (let ((a (arc x)))
-                                                       (if (equal? 'error a)
-                                                           'error
-                                                           (amb a
-                                                                (reachable a)))))))
-                      (reachable 'a))
-                   q))
-      '(b a d error))
+  (run* (q)
+    (evalo `(letrec ((arc (lambda (x)
+                            (if (equal? 'a x)
+                                'b
+                                (if (equal? 'b x)
+                                    (amb 'a 'd)
+                                    'error))))
+                     (reachable (memo-lambda reachable (x)
+                                             (let ((a (arc x)))
+                                               (if (equal? 'error a)
+                                                   'error
+                                                   (amb a
+                                                        (reachable a)))))))
+              (reachable 'a))
+           q))
+  '(b a d error))
 
 ;; a -> b
 ;; b -> a
 ;; b -> d
 (test "memod-reachable-3"
-      (run* (q)
-            (evalo `(letrec ((arc (lambda (x)
-                                    (if (equal? 'a x)
-                                        'b
-                                        (if (equal? 'b x)
-                                            (amb 'a 'd)
-                                            'error))))
-                             (reachable (memo-lambda reachable (x)
-                                                     (let ((a (arc x)))
-                                                       (if (equal? 'error a)
-                                                           'error
-                                                           (amb a
-                                                                (reachable a)))))))
-                      (let ((x (reachable 'a)))
-                        (begin
-                          (require (not (equal? 'error x)))
-                          x)))
-                   q))
-      '(b a d))
+  (run* (q)
+    (evalo `(letrec ((arc (lambda (x)
+                            (if (equal? 'a x)
+                                'b
+                                (if (equal? 'b x)
+                                    (amb 'a 'd)
+                                    'error))))
+                     (reachable (memo-lambda reachable (x)
+                                             (let ((a (arc x)))
+                                               (if (equal? 'error a)
+                                                   'error
+                                                   (amb a
+                                                        (reachable a)))))))
+              (let ((x (reachable 'a)))
+                (begin
+                  (require (not (equal? 'error x)))
+                  x)))
+           q))
+  '(b a d))
 
 (test "memod-reachable-4"
-      (run* (q)
-            (fresh (n p)
-                   (== (list n p) q)
-                   (evalo `(letrec ((arc (lambda (x)
-                                           (if (equal? 'a x)
-                                               'b
-                                               (if (equal? 'b x)
-                                                   (amb 'a 'd)
-                                                   'error))))
-                                    (reachable (memo-lambda reachable (x)
-                                                            (let ((a (arc x)))
-                                                              (if (equal? 'error a)
-                                                                  'error
-                                                                  (amb a
-                                                                       (reachable a)))))))
-                             (let ((x (reachable ',n)))
-                               (begin
-                                 (require (not (equal? 'error x)))
-                                 x)))
-                          p)))
-      '((a b)
-        (b a)
-        (a a)
-        (b d)
-        (a d)
-        (b b)))
+  (run* (q)
+    (fresh (n p)
+      (== (list n p) q)
+      (evalo `(letrec ((arc (lambda (x)
+                              (if (equal? 'a x)
+                                  'b
+                                  (if (equal? 'b x)
+                                      (amb 'a 'd)
+                                      'error))))
+                       (reachable (memo-lambda reachable (x)
+                                               (let ((a (arc x)))
+                                                 (if (equal? 'error a)
+                                                     'error
+                                                     (amb a
+                                                          (reachable a)))))))
+                (let ((x (reachable ',n)))
+                  (begin
+                    (require (not (equal? 'error x)))
+                    x)))
+             p)))
+  '((a b)
+    (b a)
+    (a a)
+    (b d)
+    (a d)
+    (b b)))
 
 (test "amb-0"
-      (run* (q)
-            (evalo `(amb)
-                   q))
-      '())
+  (run* (q)
+    (evalo `(amb)
+           q))
+  '())
 
 (test "amb-1"
-      (run* (q)
-            (evalo `(amb 'foo)
-                   q))
-      '(foo))
+  (run* (q)
+    (evalo `(amb 'foo)
+           q))
+  '(foo))
 
 (test "amb-2"
-      (run* (q)
-            (evalo `(amb 'foo 'bar)
-                   q))
-      '(foo bar))
+  (run* (q)
+    (evalo `(amb 'foo 'bar)
+           q))
+  '(foo bar))
 
 (test "amb-3"
-      (run* (q)
-            (evalo `(amb 'foo 'bar 'baz)
-                   q))
-      '(foo bar baz))
+  (run* (q)
+    (evalo `(amb 'foo 'bar 'baz)
+           q))
+  '(foo bar baz))
 
 (test "amb-4"
-      (run* (q)
-            (evalo `(amb ((lambda (x) x) 'foo)
-                         ((lambda (x) x) 'bar)
-                         ((lambda (x) x) 'baz))
-                   q))
-      '(foo bar baz))
+  (run* (q)
+    (evalo `(amb ((lambda (x) x) 'foo)
+                 ((lambda (x) x) 'bar)
+                 ((lambda (x) x) 'baz))
+           q))
+  '(foo bar baz))
 
 
 
 (test "cut-off-recursion-0"
-      (run* (q)
-            (evalo `(letrec ((f (memo-lambda f (x)
-                                             x)))
-                      (f 'foo))
-                   q))
-      '(foo))
+  (run* (q)
+    (evalo `(letrec ((f (memo-lambda f (x)
+                                     x)))
+              (f 'foo))
+           q))
+  '(foo))
 
 (test "cut-off-recursion-1"
-      (run* (q)
-            (evalo `(letrec ((f (memo-lambda f (x)
-                                             (f x))))
-                      (f 'foo))
-                   q))
-      '())
+  (run* (q)
+    (evalo `(letrec ((f (memo-lambda f (x)
+                                     (f x))))
+              (f 'foo))
+           q))
+  '())
 
 (test "cut-off-mutual-recursion-1"
-      (run* (q)
-            (evalo `(letrec ((f (memo-lambda f (x)
-                                             (g x)))
-                             (g (memo-lambda g (x)
-                                             (f x))))
-                      (f 'foo))
-                   q))
-      '())
+  (run* (q)
+    (evalo `(letrec ((f (memo-lambda f (x)
+                                     (g x)))
+                     (g (memo-lambda g (x)
+                                     (f x))))
+              (f 'foo))
+           q))
+  '())
 
 
 
 
 (test "evalo-even?/odd?-both-memod-0"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (memo-lambda odd? (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                      (even? 0))
-                   q))
-      '(#t))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (memo-lambda odd? (n)
+                                        (if (= n 0)
+                                            #f
+                                            (even? (- n 1))))))
+              (even? 0))
+           q))
+  '(#t))
 
 (test "evalo-even?/odd?-both-memod-1"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (memo-lambda odd? (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                      (even? 1))
-                   q))
-      '(#f))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (memo-lambda odd? (n)
+                                        (if (= n 0)
+                                            #f
+                                            (even? (- n 1))))))
+              (even? 1))
+           q))
+  '(#f))
 
 (test "evalo-even?/odd?-both-memod-2"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (memo-lambda odd? (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                      (even? 2))
-                   q))
-      '(#t))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (memo-lambda odd? (n)
+                                        (if (= n 0)
+                                            #f
+                                            (even? (- n 1))))))
+              (even? 2))
+           q))
+  '(#t))
 
 (test "evalo-even?/odd?-both-memod-3"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (memo-lambda odd? (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                      (even? 3))
-                   q))
-      '(#f))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (memo-lambda odd? (n)
+                                        (if (= n 0)
+                                            #f
+                                            (even? (- n 1))))))
+              (even? 3))
+           q))
+  '(#f))
 
 (test "evalo-even?/odd?-both-memod-4a"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (memo-lambda odd? (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                      (even? 4))
-                   q))
-      '(#t))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (memo-lambda odd? (n)
+                                        (if (= n 0)
+                                            #f
+                                            (even? (- n 1))))))
+              (even? 4))
+           q))
+  '(#t))
 
 (test "evalo-even?/odd?-both-memod-4a-show-table"
-      (run* (q)
-            (fresh (tables-out val)
-                   (== (list tables-out val) q)
-                   (eval-expo `(letrec ((even? (memo-lambda even? (n)
-                                                            (if (= n 0)
-                                                                #t
-                                                                (odd? (- n 1)))))
-                                        (odd? (memo-lambda odd? (n)
-                                                           (if (= n 0)
-                                                               #f
-                                                               (even? (- n 1))))))
-                                 (even? 4))
-                              initial-env
-                              initial-tables
-                              tables-out
-                              val)))
-      '((((even? ((4) (memo-value #t))
-                 ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((3) (memo-value #t))
-                ((1) (memo-value #t))
-                ((1) in-progress)
-                ((3) in-progress))
-          (even? ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((1) (memo-value #t))
-                ((1) in-progress)
-                ((3) in-progress))
-          (even? ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((1) in-progress)
-                ((3) in-progress))
-          (even? ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((3) in-progress))
-          (even? ((4) in-progress))
-          (odd?)
-          (even?))
-         #t)))
+  (run* (q)
+    (fresh (tables-out val)
+      (== (list tables-out val) q)
+      (eval-expo `(letrec ((even? (memo-lambda even? (n)
+                                               (if (= n 0)
+                                                   #t
+                                                   (odd? (- n 1)))))
+                           (odd? (memo-lambda odd? (n)
+                                              (if (= n 0)
+                                                  #f
+                                                  (even? (- n 1))))))
+                    (even? 4))
+                 initial-env
+                 initial-tables
+                 tables-out
+                 val)))
+  '((((even? ((4) (memo-value #t))
+             ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((3) (memo-value #t))
+            ((1) (memo-value #t))
+            ((1) in-progress)
+            ((3) in-progress))
+      (even? ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((1) (memo-value #t))
+            ((1) in-progress)
+            ((3) in-progress))
+      (even? ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((1) in-progress)
+            ((3) in-progress))
+      (even? ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((3) in-progress))
+      (even? ((4) in-progress))
+      (odd?)
+      (even?))
+     #t)))
 
 (test "evalo-even?/odd?-both-memod-4b"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (memo-lambda odd? (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                      (list (even? 4) (even? 4)))
-                   q))
-      '((#t #t)))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (memo-lambda odd? (n)
+                                        (if (= n 0)
+                                            #f
+                                            (even? (- n 1))))))
+              (list (even? 4) (even? 4)))
+           q))
+  '((#t #t)))
 
 (test "evalo-even?/odd?-both-memod-4b-show-table"
-      (run* (q)
-            (fresh (tables-out val)
-                   (== (list tables-out val) q)
-                   (eval-expo `(letrec ((even? (memo-lambda even? (n)
-                                                            (if (= n 0)
-                                                                #t
-                                                                (odd? (- n 1)))))
-                                        (odd? (memo-lambda odd? (n)
-                                                           (if (= n 0)
-                                                               #f
-                                                               (even? (- n 1))))))
-                                 (list (even? 4) (even? 4)))
-                              initial-env
-                              initial-tables
-                              tables-out
-                              val)))
-      '((((even? ((4) (memo-value #t))
-                 ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((3) (memo-value #t))
-                ((1) (memo-value #t))
-                ((1) in-progress)
-                ((3) in-progress))
-          (even? ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((1) (memo-value #t))
-                ((1) in-progress)
-                ((3) in-progress))
-          (even? ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((1) in-progress)
-                ((3) in-progress))
-          (even? ((2) in-progress)
-                 ((4) in-progress))
-          (odd? ((3) in-progress))
-          (even? ((4) in-progress))
-          (odd?)
-          (even?))
-         (#t #t))))
+  (run* (q)
+    (fresh (tables-out val)
+      (== (list tables-out val) q)
+      (eval-expo `(letrec ((even? (memo-lambda even? (n)
+                                               (if (= n 0)
+                                                   #t
+                                                   (odd? (- n 1)))))
+                           (odd? (memo-lambda odd? (n)
+                                              (if (= n 0)
+                                                  #f
+                                                  (even? (- n 1))))))
+                    (list (even? 4) (even? 4)))
+                 initial-env
+                 initial-tables
+                 tables-out
+                 val)))
+  '((((even? ((4) (memo-value #t))
+             ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((3) (memo-value #t))
+            ((1) (memo-value #t))
+            ((1) in-progress)
+            ((3) in-progress))
+      (even? ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((1) (memo-value #t))
+            ((1) in-progress)
+            ((3) in-progress))
+      (even? ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((1) in-progress)
+            ((3) in-progress))
+      (even? ((2) in-progress)
+             ((4) in-progress))
+      (odd? ((3) in-progress))
+      (even? ((4) in-progress))
+      (odd?)
+      (even?))
+     (#t #t))))
 
 
 
 (test "evalo-even?/odd?-even?-memod-4a"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (lambda (n)
-                                     (if (= n 0)
-                                         #f
-                                         (even? (- n 1))))))
-                      (even? 4))
-                   q))
-      '(#t))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? 4))
+           q))
+  '(#t))
 
 (test "evalo-even?/odd?-even?-memod-4b"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (lambda (n)
-                                     (if (= n 0)
-                                         #f
-                                         (even? (- n 1))))))
-                      (list (even? 4) (even? 4)))
-                   q))
-      '((#t #t)))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (list (even? 4) (even? 4)))
+           q))
+  '((#t #t)))
 
 (test "evalo-even?/odd?-both-memod-4b-show-table"
-      (run* (q)
-            (fresh (tables-out val)
-                   (== (list tables-out val) q)
-                   (eval-expo `(letrec ((even? (memo-lambda even? (n)
-                                                            (if (= n 0)
-                                                                #t
-                                                                (odd? (- n 1)))))
-                                        (odd? (lambda (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                                 (list (even? 4) (even? 4)))
-                              initial-env
-                              initial-tables
-                              tables-out
-                              val)))
-      '((((even? ((4) (memo-value #t))
-                 ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((4) in-progress))
-          (even?))
-         (#t #t))))
+  (run* (q)
+    (fresh (tables-out val)
+      (== (list tables-out val) q)
+      (eval-expo `(letrec ((even? (memo-lambda even? (n)
+                                               (if (= n 0)
+                                                   #t
+                                                   (odd? (- n 1)))))
+                           (odd? (lambda (n)
+                                   (if (= n 0)
+                                       #f
+                                       (even? (- n 1))))))
+                    (list (even? 4) (even? 4)))
+                 initial-env
+                 initial-tables
+                 tables-out
+                 val)))
+  '((((even? ((4) (memo-value #t))
+             ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((2) in-progress)
+             ((4) in-progress))
+      (even? ((4) in-progress))
+      (even?))
+     (#t #t))))
 
 (test "evalo-even?/odd?-even?-memod-4c"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (lambda (n)
-                                     (if (= n 0)
-                                         #f
-                                         (even? (- n 1))))))
-                      (list (odd? 5) (odd? 5)))
-                   q))
-      '((#t #t)))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (list (odd? 5) (odd? 5)))
+           q))
+  '((#t #t)))
 
 (test "evalo-even?/odd?-both-memod-4c-show-table"
-      (run* (q)
-            (fresh (tables-out val)
-                   (== (list tables-out val) q)
-                   (eval-expo `(letrec ((even? (memo-lambda even? (n)
-                                                            (if (= n 0)
-                                                                #t
-                                                                (odd? (- n 1)))))
-                                        (odd? (lambda (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                                 (list (odd? 5) (odd? 5)))
-                              initial-env
-                              initial-tables
-                              tables-out
-                              val)))
-      '((((even? ((4) (memo-value #t))
-                 ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((4) in-progress))
-          (even?))
-         (#t #t))))
+  (run* (q)
+    (fresh (tables-out val)
+      (== (list tables-out val) q)
+      (eval-expo `(letrec ((even? (memo-lambda even? (n)
+                                               (if (= n 0)
+                                                   #t
+                                                   (odd? (- n 1)))))
+                           (odd? (lambda (n)
+                                   (if (= n 0)
+                                       #f
+                                       (even? (- n 1))))))
+                    (list (odd? 5) (odd? 5)))
+                 initial-env
+                 initial-tables
+                 tables-out
+                 val)))
+  '((((even? ((4) (memo-value #t))
+             ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((2) in-progress)
+             ((4) in-progress))
+      (even? ((4) in-progress))
+      (even?))
+     (#t #t))))
 
 (test "evalo-even?/odd?-even?-memod-4d"
-      (run* (q)
-            (evalo `(letrec ((even? (memo-lambda even? (n)
-                                                 (if (= n 0)
-                                                     #t
-                                                     (odd? (- n 1)))))
-                             (odd? (lambda (n)
-                                     (if (= n 0)
-                                         #f
-                                         (even? (- n 1))))))
-                      (list (odd? 5) (even? 4)))
-                   q))
-      '((#t #t)))
+  (run* (q)
+    (evalo `(letrec ((even? (memo-lambda even? (n)
+                                         (if (= n 0)
+                                             #t
+                                             (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (list (odd? 5) (even? 4)))
+           q))
+  '((#t #t)))
 
 (test "evalo-even?/odd?-both-memod-4d-show-table"
-      (run* (q)
-            (fresh (tables-out val)
-                   (== (list tables-out val) q)
-                   (eval-expo `(letrec ((even? (memo-lambda even? (n)
-                                                            (if (= n 0)
-                                                                #t
-                                                                (odd? (- n 1)))))
-                                        (odd? (lambda (n)
-                                                (if (= n 0)
-                                                    #f
-                                                    (even? (- n 1))))))
-                                 (list (odd? 5) (even? 4)))
-                              initial-env
-                              initial-tables
-                              tables-out
-                              val)))
-      '((((even? ((4) (memo-value #t))
-                 ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((2) (memo-value #t))
-                 ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) (memo-value #t))
-                 ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((0) in-progress)
-                 ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((2) in-progress)
-                 ((4) in-progress))
-          (even? ((4) in-progress))
-          (even?))
-         (#t #t))))
+  (run* (q)
+    (fresh (tables-out val)
+      (== (list tables-out val) q)
+      (eval-expo `(letrec ((even? (memo-lambda even? (n)
+                                               (if (= n 0)
+                                                   #t
+                                                   (odd? (- n 1)))))
+                           (odd? (lambda (n)
+                                   (if (= n 0)
+                                       #f
+                                       (even? (- n 1))))))
+                    (list (odd? 5) (even? 4)))
+                 initial-env
+                 initial-tables
+                 tables-out
+                 val)))
+  '((((even? ((4) (memo-value #t))
+             ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((2) (memo-value #t))
+             ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) (memo-value #t))
+             ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((0) in-progress)
+             ((2) in-progress)
+             ((4) in-progress))
+      (even? ((2) in-progress)
+             ((4) in-progress))
+      (even? ((4) in-progress))
+      (even?))
+     (#t #t))))
 
 
 
 (test "evalo-even?/odd?-1"
-      (run* (q)
-            (evalo `(letrec ((even? (lambda (n)
-                                      (if (= n 0)
-                                          #t
-                                          (odd? (- n 1)))))
-                             (odd? (lambda (n)
-                                     (if (= n 0)
-                                         #f
-                                         (even? (- n 1))))))
-                      (even? 3))
-                   q))
-      '(#f))
+  (run* (q)
+    (evalo `(letrec ((even? (lambda (n)
+                              (if (= n 0)
+                                  #t
+                                  (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? 3))
+           q))
+  '(#f))
 
 (test "evalo-even?/odd?-2"
-      (run* (q)
-            (evalo `(letrec ((even? (lambda (n)
-                                      (if (= n 0)
-                                          #t
-                                          (odd? (- n 1)))))
-                             (odd? (lambda (n)
-                                     (if (= n 0)
-                                         #f
-                                         (even? (- n 1))))))
-                      (even? 4))
-                   q))
-      '(#t))
+  (run* (q)
+    (evalo `(letrec ((even? (lambda (n)
+                              (if (= n 0)
+                                  #t
+                                  (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? 4))
+           q))
+  '(#t))
 
 (test "evalo-even?/odd?-3a"
-      (run 5 (q)
-           (evalo `(letrec ((even? (lambda (n)
-                                     (if (= n 0)
-                                         #t
-                                         (odd? (- n 1)))))
-                            (odd? (lambda (n)
-                                    (if (= n 0)
-                                        #f
-                                        (even? (- n 1))))))
-                     (even? ',q))
-                  #t))
-      '(0 2 4 6 8))
+  (run 5 (q)
+    (evalo `(letrec ((even? (lambda (n)
+                              (if (= n 0)
+                                  #t
+                                  (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? ',q))
+           #t))
+  '(0 2 4 6 8))
 
 (test "evalo-even?/odd?-3b"
-      (run 5 (q)
-           (evalo `(letrec ((even? (lambda (n)
-                                     (if (= n 0)
-                                         #t
-                                         (odd? (- n 1)))))
-                            (odd? (lambda (n)
-                                    (if (= n 0)
-                                        #f
-                                        (even? (- n 1))))))
-                     (even? ,q))
-                  #t))
-      '(0 2 '0 4 6))
+  (run 5 (q)
+    (evalo `(letrec ((even? (lambda (n)
+                              (if (= n 0)
+                                  #t
+                                  (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? ,q))
+           #t))
+  '(0 2 '0 4 6))
 
 (test "evalo-even?/odd?-4a"
-      (run 5 (q)
-           (evalo `(letrec ((even? (lambda (n)
-                                     (if (= n 0)
-                                         #t
-                                         (odd? (- n 1)))))
-                            (odd? (lambda (n)
-                                    (if (= n 0)
-                                        #f
-                                        (even? (- n 1))))))
-                     (even? ',q))
-                  #f))
-      '(1 3 5 7 9))
+  (run 5 (q)
+    (evalo `(letrec ((even? (lambda (n)
+                              (if (= n 0)
+                                  #t
+                                  (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? ',q))
+           #f))
+  '(1 3 5 7 9))
 
 (test "evalo-even?/odd?-4b"
-      (run 5 (q)
-           (evalo `(letrec ((even? (lambda (n)
-                                     (if (= n 0)
-                                         #t
-                                         (odd? (- n 1)))))
-                            (odd? (lambda (n)
-                                    (if (= n 0)
-                                        #f
-                                        (even? (- n 1))))))
-                     (even? ,q))
-                  #f))
-      '(1 3 5 '1 7))
+  (run 5 (q)
+    (evalo `(letrec ((even? (lambda (n)
+                              (if (= n 0)
+                                  #t
+                                  (odd? (- n 1)))))
+                     (odd? (lambda (n)
+                             (if (= n 0)
+                                 #f
+                                 (even? (- n 1))))))
+              (even? ,q))
+           #f))
+  '(1 3 5 '1 7))
 
 
 
@@ -744,7 +744,7 @@
 ;;                                  (begin
 ;;                                    (printf "---- reified value before: ~s\n" z)
 ;;                                    ((== #f #f) c))))
-                   
+
 ;;                    (eval-listo-memod rands env tables^ tables^^ a*)
 
 ;;                    #;(project (rands env tables^ tables^^ a*)
@@ -758,7 +758,7 @@
 ;;                                 (== #f #f)))
 
 ;;                    ;;(== '(3) a*)
-                   
+
 ;;                    #;(lambdag@ (c : S D A T M)
 ;;                                (begin
 ;;                                  (printf "---- S after: ~s\n" S)
@@ -769,7 +769,7 @@
 ;;                                  (begin
 ;;                                    (printf "---- reified value after: ~s\n" z)
 ;;                                    ((== #f #f) c))))
-                   
+
 ;;                    ))
 ;;       '((((- n 2))
 ;;          ((val n . 42)
@@ -823,7 +823,7 @@
 ;;                                (begin
 ;;                                  (printf "---- S before: ~s\n" S)
 ;;                                  ((== #f #f) c)))
-                   
+
 ;;                    (eval-listo-memod rands env tables^ tables^^ a*)
 
 ;;                    #;(project (rands env tables^ tables^^ a*)
@@ -840,7 +840,7 @@
 ;;                                (begin
 ;;                                  (printf "---- S after: ~s\n" S)
 ;;                                  ((== #f #f) c)))
-                   
+
 ;;                    ))
 ;;       '((((- n 2))
 ;;          ((val n . 5) (rec (fib memo-lambda fib (n) (if (<= n 1) n (+ (fib (- n 2)) (fib (- n 1)))))) (val list closure (lambda x x) ()) (val not prim . not) (val equal? prim . equal?) (val symbol? prim . symbol?) (val cons prim . cons) (val null? prim . null?) (val car prim . car) (val cdr prim . cdr) (val + prim . +) (val - prim . -) (val * prim . *) (val / prim . /) (val = prim . =) (val != prim . !=) (val > prim . >) (val >= prim . >=) (val < prim . <) (val <= prim . <=))

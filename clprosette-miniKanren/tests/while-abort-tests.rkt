@@ -8,24 +8,24 @@
 ;;; Adapted from https://github.com/webyrd/polyconf-2015/blob/master/talk-code/while-interpreter/while-abort-tests.scm
 
 (test "abort-1"
-      (run 1 (q)
-           (->o
-            `((abort)
-              ())
-            q))
-      '((abort ())))
+  (run 1 (q)
+    (->o
+     `((abort)
+       ())
+     q))
+  '((abort ())))
 
 (test "abort-2"
-      (run 1 (q)
-           (->o
-            `((seq
-               (:= y 4)
-               (seq
-                (abort)
-                (:= x 5)))
-              ())
-            q))
-      '((abort ((y . 4)))))
+  (run 1 (q)
+    (->o
+     `((seq
+        (:= y 4)
+        (seq
+         (abort)
+         (:= x 5)))
+       ())
+     q))
+  '((abort ((y . 4)))))
 
 
 
@@ -84,44 +84,44 @@
          (abort)))))
 
 (test "symbolic-exec-prog-a"
-      (run 4 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '((0 4 1 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 1)))
-        (0 0 -1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . -1)))
-        (0 -1 -2 ((z . 2) (y . 1) (a . 0) (b . -1) (c . -2)))
-        (0 -2 -3 ((z . 2) (y . 1) (a . 0) (b . -2) (c . -3)))))
+  (run 4 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '((0 4 1 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 1)))
+    (0 0 -1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . -1)))
+    (0 -1 -2 ((z . 2) (y . 1) (a . 0) (b . -1) (c . -2)))
+    (0 -2 -3 ((z . 2) (y . 1) (a . 0) (b . -2) (c . -3)))))
 
 (test "symbolic-exec-prog-b"
-      (run 8 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (smt-typeo alpha 'Int)
-                  (smt-typeo beta 'Int)
-                  (smt-typeo gamma 'Int)
-                  (smt-asserto `(<= 0 ,alpha))
-                  (smt-asserto `(<= 0 ,beta))
-                  (smt-asserto `(<= 0 ,gamma))
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '((0 0 1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . 1)))
-        (0 1 2 ((z . 2) (y . 1) (a . 0) (b . 1) (c . 2)))
-        (0 2 3 ((z . 2) (y . 1) (a . 0) (b . 2) (c . 3)))
-        (0 3 4 ((z . 2) (y . 1) (a . 0) (b . 3) (c . 4)))
-        (0 4 5 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 5)))
-        (0 4 6 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 6)))
-        (0 4 7 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 7)))
-        (0 4 8 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 8)))))
+  (run 8 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (smt-typeo alpha 'Int)
+      (smt-typeo beta 'Int)
+      (smt-typeo gamma 'Int)
+      (smt-asserto `(<= 0 ,alpha))
+      (smt-asserto `(<= 0 ,beta))
+      (smt-asserto `(<= 0 ,gamma))
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '((0 0 1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . 1)))
+    (0 1 2 ((z . 2) (y . 1) (a . 0) (b . 1) (c . 2)))
+    (0 2 3 ((z . 2) (y . 1) (a . 0) (b . 2) (c . 3)))
+    (0 3 4 ((z . 2) (y . 1) (a . 0) (b . 3) (c . 4)))
+    (0 4 5 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 5)))
+    (0 4 6 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 6)))
+    (0 4 7 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 7)))
+    (0 4 8 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 8)))))
 
 
 
@@ -174,86 +174,86 @@
          (skip)))))
 
 (test "symbolic-exec-prog-1a"
-      (run 4 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (->o
-                   `(,symbolic-exec-prog-1
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '((0 4 1
-           ((z . 2)
-            (y . 1)
-            (a . 0)
-            (b . 4)
-            (c . 1)))
-        (0 0 -1
-           ((z . 2)
-            (y . 1)
-            (a . 0)
-            (b . 0)
-            (c . -1)))
-        (0 -1 2
-           ((z . 2)
-            (y . 1)
-            (a . 0)
-            (b . -1)
-            (c . 2)))
-        (0 -2 -2
-           ((z . 2)
-            (y . 1)
-            (a . 0)
-            (b . -2)
-            (c . -2)))))
+  (run 4 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (->o
+       `(,symbolic-exec-prog-1
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '((0 4 1
+       ((z . 2)
+        (y . 1)
+        (a . 0)
+        (b . 4)
+        (c . 1)))
+    (0 0 -1
+       ((z . 2)
+        (y . 1)
+        (a . 0)
+        (b . 0)
+        (c . -1)))
+    (0 -1 2
+       ((z . 2)
+        (y . 1)
+        (a . 0)
+        (b . -1)
+        (c . 2)))
+    (0 -2 -2
+       ((z . 2)
+        (y . 1)
+        (a . 0)
+        (b . -2)
+        (c . -2)))))
 
 ;; simplified answer format
 (test "symbolic-exec-prog-1b"
-      (run 4 (alpha beta gamma)
-           (fresh (s)
-                  (->o
-                   `(,symbolic-exec-prog-1
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '(((()      ; a == 0
-          (0 0 1) ; b == 4
-          _.0)    ; c != 0
-         (=/= ((_.0 ())))
-         (absento (abort _.0)))
-        ((()      ; a == 0
-          ()      ; b == 0
-          _.0)    ; c != 0
-         (=/= ((_.0 ())))
-         (absento (abort _.0)))
-        ((()      ; a == 0
-          (1)     ; b == 1
-          _.0)    ; c != 0
-         (=/= ((_.0 ())))
-         (absento (abort _.0)))
-        ((()       ; a == 0
-          (_.0 1)  ; b == 2 or 3
-          _.1)     ; c != 3
-         (=/= ((_.1 ())))
-         (absento (abort _.0) (abort _.1)))))
+  (run 4 (alpha beta gamma)
+    (fresh (s)
+      (->o
+       `(,symbolic-exec-prog-1
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '(((()      ; a == 0
+      (0 0 1) ; b == 4
+      _.0)    ; c != 0
+     (=/= ((_.0 ())))
+     (absento (abort _.0)))
+    ((()      ; a == 0
+      ()      ; b == 0
+      _.0)    ; c != 0
+     (=/= ((_.0 ())))
+     (absento (abort _.0)))
+    ((()      ; a == 0
+      (1)     ; b == 1
+      _.0)    ; c != 0
+     (=/= ((_.0 ())))
+     (absento (abort _.0)))
+    ((()       ; a == 0
+      (_.0 1)  ; b == 2 or 3
+      _.1)     ; c != 3
+     (=/= ((_.1 ())))
+     (absento (abort _.0) (abort _.1)))))
 
 ;; very simplified answer format
 (test "symbolic-exec-prog-1c"
-      (run 1 (alpha beta gamma)
-           (fresh (s)
-                  (->o
-                   `(,symbolic-exec-prog-1
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '(((()      ; a == 0
-          (0 0 1) ; b == 4
-          _.0)    ; c != 0
-         (=/= ((_.0 ())))
-         (absento (abort _.0)))))
+  (run 1 (alpha beta gamma)
+    (fresh (s)
+      (->o
+       `(,symbolic-exec-prog-1
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '(((()      ; a == 0
+      (0 0 1) ; b == 4
+      _.0)    ; c != 0
+     (=/= ((_.0 ())))
+     (absento (abort _.0)))))
 
 ;; NOTE: run* diverge, because SMT enumerate all possible values instead of a simplified answer format.
 ;; Run 100 is OK, but it doesn't enumerate (1 tt) in z3-4.8.12 with smt.arith.solver=6 (default), although it is a valid solution.

@@ -10,90 +10,90 @@
 (define remove-one-elemento
   (lambda (x ls out)
     (fresh (a d)
-           (== `(,a . ,d) ls)
-           (conde
-            ((== x a) (== d out))
-            ((=/= x a)
-             (fresh (res)
-                    (== `(,a . ,res) out)
-                    (remove-one-elemento x d res)))))))
+      (== `(,a . ,d) ls)
+      (conde
+        ((== x a) (== d out))
+        ((=/= x a)
+         (fresh (res)
+           (== `(,a . ,res) out)
+           (remove-one-elemento x d res)))))))
 
 (define puzzleo
   (lambda (expr num* val num*^)
     (conde    
-     
-     [(numbero expr) (== expr val) (remove-one-elemento expr num* num*^)]
+      
+      [(numbero expr) (== expr val) (remove-one-elemento expr num* num*^)]
 
-     [(fresh (a1 a2 n1 n2 num*^^)
-             (smt-typeo val 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (== `(+ ,a1 ,a2) expr)
-             (smt-asserto `(= ,val (+ ,n1 ,n2)))
-             (puzzleo a1 num* n1 num*^^)
-             (puzzleo a2 num*^^ n2 num*^))]
+      [(fresh (a1 a2 n1 n2 num*^^)
+         (smt-typeo val 'Int)
+         (smt-typeo n1 'Int)
+         (smt-typeo n2 'Int)
+         (== `(+ ,a1 ,a2) expr)
+         (smt-asserto `(= ,val (+ ,n1 ,n2)))
+         (puzzleo a1 num* n1 num*^^)
+         (puzzleo a2 num*^^ n2 num*^))]
 
-     [(fresh (a1 a2 n1 n2 num*^^)
-             (smt-typeo val 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (== `(- ,a1 ,a2) expr)
-             (smt-asserto `(= ,val (- ,n1 ,n2)))
-             (puzzleo a1 num* n1 num*^^)
-             (puzzleo a2 num*^^ n2 num*^))]
+      [(fresh (a1 a2 n1 n2 num*^^)
+         (smt-typeo val 'Int)
+         (smt-typeo n1 'Int)
+         (smt-typeo n2 'Int)
+         (== `(- ,a1 ,a2) expr)
+         (smt-asserto `(= ,val (- ,n1 ,n2)))
+         (puzzleo a1 num* n1 num*^^)
+         (puzzleo a2 num*^^ n2 num*^))]
 
-     [(fresh (a1 a2 n1 n2 num*^^)
-             (smt-typeo val 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (== `(* ,a1 ,a2) expr)
-             (smt-asserto `(= ,val (* ,n1 ,n2)))
-             (puzzleo a1 num* n1 num*^^)
-             (puzzleo a2 num*^^ n2 num*^))]
+      [(fresh (a1 a2 n1 n2 num*^^)
+         (smt-typeo val 'Int)
+         (smt-typeo n1 'Int)
+         (smt-typeo n2 'Int)
+         (== `(* ,a1 ,a2) expr)
+         (smt-asserto `(= ,val (* ,n1 ,n2)))
+         (puzzleo a1 num* n1 num*^^)
+         (puzzleo a2 num*^^ n2 num*^))]
 
-     [(fresh (a1 a2 n1 n2 num*^^)
-             (smt-typeo val 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (== `(/ ,a1 ,a2) expr)
-             (smt-asserto `(not (= ,n2 0)))
-             (smt-asserto `(= ,val (div ,n1 ,n2)))
-             (puzzleo a1 num* n1 num*^^)
-             (puzzleo a2 num*^^ n2 num*^))]
-     
-     )))
-
-(run 1 (q)
-     (fresh (e nums out nums^)
-            (== (list e nums out nums^) q)
-            (== '(8 8 3 3) nums)
-            (== '(* 3 8) e)
-            (puzzleo e nums out nums^)))
+      [(fresh (a1 a2 n1 n2 num*^^)
+         (smt-typeo val 'Int)
+         (smt-typeo n1 'Int)
+         (smt-typeo n2 'Int)
+         (== `(/ ,a1 ,a2) expr)
+         (smt-asserto `(not (= ,n2 0)))
+         (smt-asserto `(= ,val (div ,n1 ,n2)))
+         (puzzleo a1 num* n1 num*^^)
+         (puzzleo a2 num*^^ n2 num*^))]
+      
+      )))
 
 (run 1 (q)
-     (fresh (e nums out)
-            (== (list e nums out) q)
-            (== '(8 8 3 3) nums)
-            (== '(/ 8 (- 3 (/ 8 3))) e)
-            (puzzleo e nums out '())))
+  (fresh (e nums out nums^)
+    (== (list e nums out nums^) q)
+    (== '(8 8 3 3) nums)
+    (== '(* 3 8) e)
+    (puzzleo e nums out nums^)))
+
+(run 1 (q)
+  (fresh (e nums out)
+    (== (list e nums out) q)
+    (== '(8 8 3 3) nums)
+    (== '(/ 8 (- 3 (/ 8 3))) e)
+    (puzzleo e nums out '())))
 
 ;; 8/(3-(8/3))
 ;; = 8/(1/3)
 ;; = 24
 (test "24-puzzle-test-solution"
-      (run 1 (e)
-           (fresh (nums)
-                  (== '(8 8 3 3) nums)
-                  (== '(/ 8 (- 3 (/ 8 3))) e)
-                  (puzzleo e nums 24 '())))
-      '?)
+  (run 1 (e)
+    (fresh (nums)
+      (== '(8 8 3 3) nums)
+      (== '(/ 8 (- 3 (/ 8 3))) e)
+      (puzzleo e nums 24 '())))
+  '?)
 
 (test "24-puzzle-b"
-      (run 1 (e)
-           (fresh (nums)
-                  (== '(1 1 1 8) nums)
-                  (puzzleo e nums 24 '())))
-      '((* 8 (+ 1 (+ 1 1)))))
+  (run 1 (e)
+    (fresh (nums)
+      (== '(1 1 1 8) nums)
+      (puzzleo e nums 24 '())))
+  '((* 8 (+ 1 (+ 1 1)))))
 
 
 ;; #!eof
@@ -193,7 +193,7 @@
 ;; (define Ao
 ;;   (lambda (expr num)
 ;;     (conde    
-     
+
 ;;      [(numbero expr) (== expr num)]
 
 ;;      [(fresh (a1 a2 n1 n2)
@@ -232,7 +232,7 @@
 ;;              (smt-asserto `(= ,num (div ,n1 ,n2)))
 ;;              (Ao a1 n1)
 ;;              (Ao a2 n2))]
-     
+
 ;;      )))
 
 ;; (test "24-a"

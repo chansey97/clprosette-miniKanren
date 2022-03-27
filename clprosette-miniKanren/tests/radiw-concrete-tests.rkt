@@ -42,28 +42,28 @@
 
 (time-test "fact-5"
            (run* (q)
-                 (evalo efact q))
+             (evalo efact q))
            '((int 120)))
 
 (time-test "fib-6"
            (run* (q)
-                 (evalo efib q))
+             (evalo efib q))
            '((int 8)))
 
 (time-test "fib-synthesis-1"
            (run 1 (fib)
-                (fresh (r)
-                       (== `(lam self n
-                                 (if0 (var n)
-                                      (int 0)
-                                      (if0 (plus (var n) (int -1))
-                                           ,r
-                                           (plus (app (var self)
-                                                      (plus (var n) (int -1)))
-                                                 (app (var self)
-                                                      (plus (var n) (int -2)))))))
-                           fib))
-                (evalo `(app ,fib (int 6)) '(int 8)))
+             (fresh (r)
+               (== `(lam self n
+                         (if0 (var n)
+                              (int 0)
+                              (if0 (plus (var n) (int -1))
+                                   ,r
+                                   (plus (app (var self)
+                                              (plus (var n) (int -1)))
+                                         (app (var self)
+                                              (plus (var n) (int -2)))))))
+                   fib))
+             (evalo `(app ,fib (int 6)) '(int 8)))
            '((lam self
                   n
                   (if0 (var n)
@@ -76,21 +76,21 @@
 
 (time-test "fib-synthesis-2"
            (run 1 (fib)
-                (fresh (r r1 r2)
-                       (== `(lam self n
-                                 (if0 (var n)
-                                      (int 0)
-                                      (if0 (plus (var n) (int -1))
-                                           ,r
-                                           (plus (app (var self)
-                                                      (plus (var n) ,r1))
-                                                 (app (var self)
-                                                      (plus (var n) ,r2))))))
-                           fib))
-                (evalo `(app ,fib (int 0)) '(int 0))
-                (evalo `(app ,fib (int 2)) '(int 1))
-                (evalo `(app ,fib (int 3)) '(int 2))
-                (evalo `(app ,fib (int 4)) '(int 3)))
+             (fresh (r r1 r2)
+               (== `(lam self n
+                         (if0 (var n)
+                              (int 0)
+                              (if0 (plus (var n) (int -1))
+                                   ,r
+                                   (plus (app (var self)
+                                              (plus (var n) ,r1))
+                                         (app (var self)
+                                              (plus (var n) ,r2))))))
+                   fib))
+             (evalo `(app ,fib (int 0)) '(int 0))
+             (evalo `(app ,fib (int 2)) '(int 1))
+             (evalo `(app ,fib (int 3)) '(int 2))
+             (evalo `(app ,fib (int 4)) '(int 3)))
            '((lam self
                   n
                   (if0 (var n)

@@ -42,105 +42,105 @@
 (define remove-one-elemento
   (lambda (x ls out)
     (fresh (a d)
-           (== `(,a . ,d) ls)
-           (numbero a)
-           (smt-typeo a 'Int)
-           (smt-typeo x 'Int)
-           (conde
-            ((smt-asserto `(= ,a ,x))
-             (== d out))
-            ((smt-asserto `(< ,a ,x))
-             (fresh (res)
-                    (== `(,a . ,res) out)
-                    (remove-one-elemento x d res)))))))
+      (== `(,a . ,d) ls)
+      (numbero a)
+      (smt-typeo a 'Int)
+      (smt-typeo x 'Int)
+      (conde
+        ((smt-asserto `(= ,a ,x))
+         (== d out))
+        ((smt-asserto `(< ,a ,x))
+         (fresh (res)
+           (== `(,a . ,res) out)
+           (remove-one-elemento x d res)))))))
 
 (define puzzleo
   (lambda (expr num* max-ops val num*^ max-ops^)
     (fresh ()
-           (smt-typeo val 'Int)
-           (smt-typeo max-ops 'Int)
-           (smt-typeo max-ops^ 'Int)
-           
-           (conde
-            
-            [(numbero expr)
-             (smt-typeo expr 'Int)
-             ;; Originally used (== expr val).
-             ;; Which version is preferable?
-             ;; What are the tradeoffs?
-             (smt-asserto `(and (= ,expr ,val) (= ,max-ops ,max-ops^)))
-             (remove-one-elemento expr num* num*^)]
+      (smt-typeo val 'Int)
+      (smt-typeo max-ops 'Int)
+      (smt-typeo max-ops^ 'Int)
+      
+      (conde
+        
+        [(numbero expr)
+         (smt-typeo expr 'Int)
+         ;; Originally used (== expr val).
+         ;; Which version is preferable?
+         ;; What are the tradeoffs?
+         (smt-asserto `(and (= ,expr ,val) (= ,max-ops ,max-ops^)))
+         (remove-one-elemento expr num* num*^)]
 
-            [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
-                    (smt-typeo n1 'Int)
-                    (smt-typeo n2 'Int)
-                    (smt-typeo max-ops-1 'Int)
-                    (== `(+ ,a1 ,a2) expr)
-                    (smt-asserto `(and (= ,val (+ ,n1 ,n2)) (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1)))
-                    (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
-                    (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
+        [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
+           (smt-typeo n1 'Int)
+           (smt-typeo n2 'Int)
+           (smt-typeo max-ops-1 'Int)
+           (== `(+ ,a1 ,a2) expr)
+           (smt-asserto `(and (= ,val (+ ,n1 ,n2)) (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1)))
+           (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
+           (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
 
-            [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
-                    (smt-typeo n1 'Int)
-                    (smt-typeo n2 'Int)
-                    (smt-typeo max-ops-1 'Int)
-                    (== `(- ,a1 ,a2) expr)
-                    (smt-asserto `(and (= ,val (- ,n1 ,n2)) (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1)))
-                    (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
-                    (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
+        [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
+           (smt-typeo n1 'Int)
+           (smt-typeo n2 'Int)
+           (smt-typeo max-ops-1 'Int)
+           (== `(- ,a1 ,a2) expr)
+           (smt-asserto `(and (= ,val (- ,n1 ,n2)) (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1)))
+           (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
+           (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
 
-            [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
-                    (smt-typeo n1 'Int)
-                    (smt-typeo n2 'Int)
-                    (smt-typeo max-ops-1 'Int)
-                    (== `(* ,a1 ,a2) expr)
-                    (smt-asserto `(and (= ,val (* ,n1 ,n2)) (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1)))
-                    (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
-                    (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
+        [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
+           (smt-typeo n1 'Int)
+           (smt-typeo n2 'Int)
+           (smt-typeo max-ops-1 'Int)
+           (== `(* ,a1 ,a2) expr)
+           (smt-asserto `(and (= ,val (* ,n1 ,n2)) (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1)))
+           (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
+           (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
 
-            [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
-                    (smt-typeo n1 'Int)
-                    (smt-typeo n2 'Int)
-                    (smt-typeo max-ops-1 'Int)
-                    (== `(/ ,a1 ,a2) expr)
-                    (smt-asserto `(and (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1) (not (= ,n2 0)) (= ,val (div ,n1 ,n2))))
-                    (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
-                    (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
-            
-            ))
+        [(fresh (a1 a2 n1 n2 num*^^ max-ops-1 max-ops^^)
+           (smt-typeo n1 'Int)
+           (smt-typeo n2 'Int)
+           (smt-typeo max-ops-1 'Int)
+           (== `(/ ,a1 ,a2) expr)
+           (smt-asserto `(and (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1) (not (= ,n2 0)) (= ,val (div ,n1 ,n2))))
+           (puzzleo a1 num* max-ops-1 n1 num*^^ max-ops^^)
+           (puzzleo a2 num*^^ max-ops^^ n2 num*^ max-ops^))]
+        
+        ))
     ))
 
 (test "remove-one-elemento-a"
-      (run* (q)
-            (fresh (x out)
-                   (== (list x out) q)
-                   (remove-one-elemento x '(2 2 10 10) out)))
-      '((2 (2 10 10))
-        (10 (2 2 10))))
+  (run* (q)
+    (fresh (x out)
+      (== (list x out) q)
+      (remove-one-elemento x '(2 2 10 10) out)))
+  '((2 (2 10 10))
+    (10 (2 2 10))))
 
 ;; Keep track of minimum number of numbers that can be used in the search!
 ;; This query should terminate!
 #|
 (test "24-puzzle-refute-a"
-      (run 1 (e) (puzzleo e '() 3 24 '() 0))
-      '())
+(run 1 (e) (puzzleo e '() 3 24 '() 0))
+'())
 
 (test "24-puzzle-refute-b"
-      (run 1 (e) (puzzleo e '(0) 3 24 '() 0))
-      '())
+(run 1 (e) (puzzleo e '(0) 3 24 '() 0))
+'())
 
 (test "24-puzzle-refute-c"
-      (run 1 (e) (puzzleo e '(1) 3 24 '() 0))
-      '())
+(run 1 (e) (puzzleo e '(1) 3 24 '() 0))
+'())
 |#
 
 (test "24-puzzle-a-check-answer-a"
-      (run 1 (e) (== '(* 8 (+ 1 (+ 1 1))) e) (puzzleo e '(1 1 1 8) 3 24 '() 0))
-      '((* 8 (+ 1 (+ 1 1)))))
+  (run 1 (e) (== '(* 8 (+ 1 (+ 1 1))) e) (puzzleo e '(1 1 1 8) 3 24 '() 0))
+  '((* 8 (+ 1 (+ 1 1)))))
 
 (test "24-puzzle-a-check-answer-b"
-      (run 1 (e) (== '(+ 8 (+ 1 (+ 1 1))) e) (puzzleo e '(1 1 1 8) 3 24 '() 0))
-      '())
+  (run 1 (e) (== '(+ 8 (+ 1 (+ 1 1))) e) (puzzleo e '(1 1 1 8) 3 24 '() 0))
+  '())
 
 
 ;; On Will's lappy--timings, according to Chez Scheme:
@@ -148,13 +148,13 @@
 ;;
 ;; run 6: 3.2s CPU time, 103s real time
 (test "24-puzzle-h"
-      (run 6 (e) (puzzleo e '(2 2 2 12) 3 24 '() 0))
-      '((+ (- 2 2) (* 2 12))
-        (+ (- 2 2) (* 12 2))
-        (/ (* 2 12) (/ 2 2))
-        (+ 2 (- (* 2 12) 2))
-        (+ 2 (- (* 12 2) 2))
-        (* 2 (+ 2 (- 12 2)))))
+  (run 6 (e) (puzzleo e '(2 2 2 12) 3 24 '() 0))
+  '((+ (- 2 2) (* 2 12))
+    (+ (- 2 2) (* 12 2))
+    (/ (* 2 12) (/ 2 2))
+    (+ 2 (- (* 2 12) 2))
+    (+ 2 (- (* 12 2) 2))
+    (* 2 (+ 2 (- 12 2)))))
 
 ;; #!eof
 

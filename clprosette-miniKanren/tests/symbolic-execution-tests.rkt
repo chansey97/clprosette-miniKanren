@@ -5,103 +5,103 @@
 (printf "symbolic-execution-tests.rkt\n")
 
 (test "symbolic-execution-1a"
-      (run 10 (q)
-           (evalo
-            `((lambda (n)
-                (if (= 137 n)
-                    'foo
-                    'bar))
-              ,q)
-            'foo))
-      '(137
-        '137
-        (((lambda _.0 137)) (sym _.0))
-        (((lambda _.0 137) _.1) (num _.1) (sym _.0))
-        (((lambda _.0 137) _.1 _.2) (num _.1 _.2) (sym _.0))
-        (((lambda _.0 137) _.1 _.2 _.3) (num _.1 _.2 _.3) (sym _.0))
-        (((lambda _.0 137) list) (sym _.0))
-        (((lambda _.0 137) list _.1) (num _.1) (sym _.0))
-        ((match _.0 (_.0 137) . _.1) (num _.0))
-        (((lambda _.0 137) _.1 _.2 _.3 _.4) (num _.1 _.2 _.3 _.4) (sym _.0))))
+  (run 10 (q)
+    (evalo
+     `((lambda (n)
+         (if (= 137 n)
+             'foo
+             'bar))
+       ,q)
+     'foo))
+  '(137
+    '137
+    (((lambda _.0 137)) (sym _.0))
+    (((lambda _.0 137) _.1) (num _.1) (sym _.0))
+    (((lambda _.0 137) _.1 _.2) (num _.1 _.2) (sym _.0))
+    (((lambda _.0 137) _.1 _.2 _.3) (num _.1 _.2 _.3) (sym _.0))
+    (((lambda _.0 137) list) (sym _.0))
+    (((lambda _.0 137) list _.1) (num _.1) (sym _.0))
+    ((match _.0 (_.0 137) . _.1) (num _.0))
+    (((lambda _.0 137) _.1 _.2 _.3 _.4) (num _.1 _.2 _.3 _.4) (sym _.0))))
 
 (test "symbolic-execution-1b"
-      (run* (q)
-            (evalo
-             `((lambda (n)
-                 (if (= 137 n)
-                     'foo
-                     'bar))
-               ',q)
-             'foo))
-      '(137))
+  (run* (q)
+    (evalo
+     `((lambda (n)
+         (if (= 137 n)
+             'foo
+             'bar))
+       ',q)
+     'foo))
+  '(137))
 
 (test "symbolic-execution-2a"
-      (run 10 (q)
-           (evalo
-            `((lambda (n)
-                (if (= 137 n)
-                    'foo
-                    'bar))
-              ,q)
-            'bar))
-      '(138 139 140 141 142 143 144 145 146 147))
+  (run 10 (q)
+    (evalo
+     `((lambda (n)
+         (if (= 137 n)
+             'foo
+             'bar))
+       ,q)
+     'bar))
+  '(138 139 140 141 142 143 144 145 146 147))
 
 (test "symbolic-execution-2b"
-      (run 10 (q)
-           (fresh (a d)
-                  (== `(,a . ,d) q))
-           (evalo
-            `((lambda (n)
-                (if (= 137 n)
-                    'foo
-                    'bar))
-              ,q)
-            'bar))
-      '('138 '139 '140 '141 '142 '143 '144 '145 '146 '147))
+  (run 10 (q)
+    (fresh (a d)
+      (== `(,a . ,d) q))
+    (evalo
+     `((lambda (n)
+         (if (= 137 n)
+             'foo
+             'bar))
+       ,q)
+     'bar))
+  '('138 '139 '140 '141 '142 '143 '144 '145 '146 '147))
 
 (test "symbolic-execution-2c"
-      (run 10 (q)
-           (evalo
-            `((lambda (n)
-                (if (= 137 n)
-                    'foo
-                    'bar))
-              ',q)
-            'bar))
-      '(138 139 140 141 142 143 144 145 146 147))
+  (run 10 (q)
+    (evalo
+     `((lambda (n)
+         (if (= 137 n)
+             'foo
+             'bar))
+       ',q)
+     'bar))
+  '(138 139 140 141 142 143 144 145 146 147))
 
 (test "symbolic-execution-3a"
-      (run* (q)
-            (evalo
-             `((lambda (n)
-                 (if (= (+ (* n 3) 5) 14359371734)
-                     'foo
-                     'bar))
-               ',q)
-             'foo))
-      '(4786457243))
+  (run* (q)
+    (evalo
+     `((lambda (n)
+         (if (= (+ (* n 3) 5) 14359371734)
+             'foo
+             'bar))
+       ',q)
+     'foo))
+  '(4786457243))
 
 (test "symbolic-execution-4a"
-      (run* (q)
-            (evalo
-             `((lambda (n)
-                 (if (= (+ (* n 17) 5) 81369773136)
-                     'foo
-                     'bar))
-               ',q)
-             'foo))
-      '(4786457243))
+  (run* (q)
+    (evalo
+     `((lambda (n)
+         (if (= (+ (* n 17) 5) 81369773136)
+             'foo
+             'bar))
+       ',q)
+     'foo))
+  '(4786457243))
 
 (test "symbolic-execution-5a"
-      (run* (q)
-            (evalo
-             `((lambda (n)
-                 (if (= (+ (* n 17) 5) 127142397731434)
-                     'foo
-                     'bar))
-               ',q)
-             'foo))
-      '(7478964572437))
+  (run* (q)
+    (evalo
+     `((lambda (n)
+         (if (= (+ (* n 17) 5) 127142397731434)
+             'foo
+             'bar))
+       ',q)
+     'foo))
+  '(7478964572437))
 
 
 
@@ -165,98 +165,98 @@
          (abort)))))
 
 (test "symbolic-exec-prog-a"
-      (run 8 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '((0 4 1 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 1)))
-        (0 0 -1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . -1)))
-        (0 -1 -2 ((z . 2) (y . 1) (a . 0) (b . -1) (c . -2)))
-        (0 -2 -3 ((z . 2) (y . 1) (a . 0) (b . -2) (c . -3)))
-        (0 -3 -4 ((z . 2) (y . 1) (a . 0) (b . -3) (c . -4)))
-        (0 -4 -5 ((z . 2) (y . 1) (a . 0) (b . -4) (c . -5)))
-        (0 -5 -6 ((z . 2) (y . 1) (a . 0) (b . -5) (c . -6)))
-        (0 -6 -7 ((z . 2) (y . 1) (a . 0) (b . -6) (c . -7)))))
+  (run 8 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '((0 4 1 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 1)))
+    (0 0 -1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . -1)))
+    (0 -1 -2 ((z . 2) (y . 1) (a . 0) (b . -1) (c . -2)))
+    (0 -2 -3 ((z . 2) (y . 1) (a . 0) (b . -2) (c . -3)))
+    (0 -3 -4 ((z . 2) (y . 1) (a . 0) (b . -3) (c . -4)))
+    (0 -4 -5 ((z . 2) (y . 1) (a . 0) (b . -4) (c . -5)))
+    (0 -5 -6 ((z . 2) (y . 1) (a . 0) (b . -5) (c . -6)))
+    (0 -6 -7 ((z . 2) (y . 1) (a . 0) (b . -6) (c . -7)))))
 
 (test "symbolic-exec-prog-b"
-      (run 8 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (smt-typeo alpha 'Int)
-                  (smt-typeo beta 'Int)
-                  (smt-typeo gamma 'Int)
-                  (smt-asserto `(<= 0 ,alpha))
-                  (smt-asserto `(<= 0 ,beta))
-                  (smt-asserto `(<= 0 ,gamma))
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '((0 0 1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . 1)))
-        (0 1 2 ((z . 2) (y . 1) (a . 0) (b . 1) (c . 2)))
-        (0 2 3 ((z . 2) (y . 1) (a . 0) (b . 2) (c . 3)))
-        (0 3 4 ((z . 2) (y . 1) (a . 0) (b . 3) (c . 4)))
-        (0 4 5 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 5)))
-        (0 4 6 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 6)))
-        (0 4 7 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 7)))
-        (0 4 8 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 8)))))
+  (run 8 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (smt-typeo alpha 'Int)
+      (smt-typeo beta 'Int)
+      (smt-typeo gamma 'Int)
+      (smt-asserto `(<= 0 ,alpha))
+      (smt-asserto `(<= 0 ,beta))
+      (smt-asserto `(<= 0 ,gamma))
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '((0 0 1 ((z . 2) (y . 1) (a . 0) (b . 0) (c . 1)))
+    (0 1 2 ((z . 2) (y . 1) (a . 0) (b . 1) (c . 2)))
+    (0 2 3 ((z . 2) (y . 1) (a . 0) (b . 2) (c . 3)))
+    (0 3 4 ((z . 2) (y . 1) (a . 0) (b . 3) (c . 4)))
+    (0 4 5 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 5)))
+    (0 4 6 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 6)))
+    (0 4 7 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 7)))
+    (0 4 8 ((z . 2) (y . 1) (a . 0) (b . 4) (c . 8)))))
 
 (test "symbolic-exec-prog-c"
-      (run 1 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (smt-typeo alpha 'Int)
-                  (smt-typeo beta 'Int)
-                  (smt-typeo gamma 'Int)
-                  (smt-asserto `(not (= 0 ,alpha)))
-                  (smt-asserto `(<= 0 ,beta))
-                  (smt-asserto `(<= 0 ,gamma))
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '())
+  (run 1 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (smt-typeo alpha 'Int)
+      (smt-typeo beta 'Int)
+      (smt-typeo gamma 'Int)
+      (smt-asserto `(not (= 0 ,alpha)))
+      (smt-asserto `(<= 0 ,beta))
+      (smt-asserto `(<= 0 ,gamma))
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '())
 
 (test "symbolic-exec-prog-d"
-      (run 1 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (smt-typeo alpha 'Int)
-                  (smt-asserto `(not (= 0 ,alpha)))
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '())
+  (run 1 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (smt-typeo alpha 'Int)
+      (smt-asserto `(not (= 0 ,alpha)))
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '())
 
 (test "symbolic-exec-prog-e"
-      (run 8 (q)
-           (fresh (alpha beta gamma s)
-                  (== (list alpha beta gamma s) q)
-                  (smt-typeo beta 'Int)
-                  (smt-asserto `(not (= 0 ,beta)))
-                  (->o
-                   `(,symbolic-exec-prog
-                     ((a . ,alpha)
-                      (b . ,beta)
-                      (c . ,gamma)))
-                   `(abort ,s))))
-      '((0 1 1 ((z . 2) (y . 1) (a . 0) (b . 1) (c . 1)))
-        (0 -1 -1 ((z . 2) (y . 1) (a . 0) (b . -1) (c . -1)))
-        (0 -2 -2 ((z . 2) (y . 1) (a . 0) (b . -2) (c . -2)))
-        (0 -3 -3 ((z . 2) (y . 1) (a . 0) (b . -3) (c . -3)))
-        (0 -4 -4 ((z . 2) (y . 1) (a . 0) (b . -4) (c . -4)))
-        (0 -5 -5 ((z . 2) (y . 1) (a . 0) (b . -5) (c . -5)))
-        (0 -6 -6 ((z . 2) (y . 1) (a . 0) (b . -6) (c . -6)))
-        (0 2 -7 ((z . 2) (y . 1) (a . 0) (b . 2) (c . -7)))))
+  (run 8 (q)
+    (fresh (alpha beta gamma s)
+      (== (list alpha beta gamma s) q)
+      (smt-typeo beta 'Int)
+      (smt-asserto `(not (= 0 ,beta)))
+      (->o
+       `(,symbolic-exec-prog
+         ((a . ,alpha)
+          (b . ,beta)
+          (c . ,gamma)))
+       `(abort ,s))))
+  '((0 1 1 ((z . 2) (y . 1) (a . 0) (b . 1) (c . 1)))
+    (0 -1 -1 ((z . 2) (y . 1) (a . 0) (b . -1) (c . -1)))
+    (0 -2 -2 ((z . 2) (y . 1) (a . 0) (b . -2) (c . -2)))
+    (0 -3 -3 ((z . 2) (y . 1) (a . 0) (b . -3) (c . -3)))
+    (0 -4 -4 ((z . 2) (y . 1) (a . 0) (b . -4) (c . -4)))
+    (0 -5 -5 ((z . 2) (y . 1) (a . 0) (b . -5) (c . -5)))
+    (0 -6 -6 ((z . 2) (y . 1) (a . 0) (b . -6) (c . -6)))
+    (0 2 -7 ((z . 2) (y . 1) (a . 0) (b . 2) (c . -7)))))
