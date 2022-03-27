@@ -2,7 +2,6 @@
 (require "../mk.rkt")
 (require "../rosette-bridge.rkt")
 (require "../test-check.rkt")
-(require "../logging.rkt")
 (require "./full-interp-extended.rkt")
 
 ;; (current-bitwidth 8)
