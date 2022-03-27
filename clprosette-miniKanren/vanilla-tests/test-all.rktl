@@ -1,6 +1,6 @@
 #lang racket/load
-(require "mk.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../test-check.rkt")
 
 (load "test-all.scm")
 
