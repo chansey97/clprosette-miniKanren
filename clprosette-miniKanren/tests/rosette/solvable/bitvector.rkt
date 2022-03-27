@@ -14,7 +14,7 @@
                   ;; ':smt.random_seed 3
                   ;; ':smt.arith.solver 1
                   ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
-                  ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  ;; ':smt.arith.solver 6 ; default:6 in z3-4.8.12
                   )))
 
 (test "bitwise version of deMorgan's law:"
