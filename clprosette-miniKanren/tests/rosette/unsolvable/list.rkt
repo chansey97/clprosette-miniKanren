@@ -1,29 +1,28 @@
 #lang racket
-(require "../../rosette/rosette/base/core/term.rkt")
-(require "../../rosette/rosette/base/core/type.rkt")
+(require "../../../../rosette/rosette/base/core/term.rkt")
+(require "../../../../rosette/rosette/base/core/type.rkt")
 
-(require "../../rosette/rosette/base/form/define.rkt")
+(require "../../../../rosette/rosette/base/form/define.rkt")
 
-(require "../../rosette/rosette/solver/solver.rkt")
-(require "../../rosette/rosette/solver/solution.rkt")
-(require "../../rosette/rosette/solver/smt/z3.rkt")
-(require (only-in "../../rosette/rosette/solver/smt/server.rkt" output-smt))
+(require "../../../../rosette/rosette/solver/solver.rkt")
+(require "../../../../rosette/rosette/solver/solution.rkt")
+(require "../../../../rosette/rosette/solver/smt/z3.rkt")
+(require (only-in "../../../../rosette/rosette/solver/smt/server.rkt" output-smt))
 
-(require (prefix-in r/ "../../rosette/rosette/base/core/equality.rkt"))
-(require (prefix-in r/ "../../rosette/rosette/base/core/bool.rkt"))
-(require (prefix-in r/ "../../rosette/rosette/base/core/real.rkt"))
-(require (prefix-in r/ "../../rosette/rosette/base/adt/list.rkt"))
+(require (prefix-in r/ "../../../../rosette/rosette/base/core/equality.rkt"))
+(require (prefix-in r/ "../../../../rosette/rosette/base/core/bool.rkt"))
+(require (prefix-in r/ "../../../../rosette/rosette/base/core/real.rkt"))
+(require (prefix-in r/ "../../../../rosette/rosette/base/adt/list.rkt"))
 
-(require "../../rosette/rosette/query/core.rkt") ; current-solver
-;; (require "../../rosette/rosette/query/finitize.rkt")
+(require "../../../../rosette/rosette/query/core.rkt") ; current-solver
+;; (require "../../../../rosette/rosette/query/finitize.rkt")
 
-(require "../logging.rkt")
-(require "../test-check.rkt")
-(require "../mk.rkt")
-(require "../full-interp-extended.rkt")
+(require "../../../logging.rkt")
+(require "../../../test-check.rkt")
+(require "../../../mk.rkt")
 
 ;; (current-bitwidth 8)
-(output-smt "./")
+;; (output-smt "./")
 (current-solver
  (z3
   #:path "C:/env/z3/z3-4.8.7/z3-4.8.7-x64-win/bin/z3.exe"
