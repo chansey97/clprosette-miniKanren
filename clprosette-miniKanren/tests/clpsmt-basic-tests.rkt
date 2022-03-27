@@ -1,3 +1,8 @@
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(printf "clpsmt-basic-tests.scm\n")
+
 (test "counters"
       (let ((c1 z3-counter-check-sat)
             (c2 z3-counter-get-model))

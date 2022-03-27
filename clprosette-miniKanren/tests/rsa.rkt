@@ -1,9 +1,12 @@
+#lang racket
 ;;; RSA crypto algorithm in miniKanren + CLP(SMT)
 
 ;; Examples taken from http://doctrina.org/How-RSA-Works-With-Examples.html
 
-(load "require.scm")
-(load "full-interp-with-let.scm")
+(require "mk.rkt")
+(require "full-interp-with-let.rkt")
+(require "test-check.rkt")
+(printf "rsa.rkt\n")
 
 ;; test 'begin' extension to evalo
 (test "evalo-begin-1"
@@ -327,16 +330,16 @@
            '(p))
 
 
-#!eof
+;; #!eof
 
-(time
- (test "evalo-backwards-fac-quoted-6"
-       (run* (q)
-             (evalo `(letrec ((fac
-                               (lambda (n)
-                                 (if (< n 0) #f
-                                     (if (= n 0) 1
-                                         (* n (fac (- n 1))))))))
-                       (fac ',q))
-                    720))
-       '(6)))
+;; (time
+;;  (test "evalo-backwards-fac-quoted-6"
+;;        (run* (q)
+;;              (evalo `(letrec ((fac
+;;                                (lambda (n)
+;;                                  (if (< n 0) #f
+;;                                      (if (= n 0) 1
+;;                                          (* n (fac (- n 1))))))))
+;;                        (fac ',q))
+;;                     720))
+;;        '(6)))

@@ -1,5 +1,8 @@
-(load "require.scm")
-(load "radiw.scm")
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(require "radiw.rkt")
+(printf "radiw-tests.rkt\n")
 
 ;; WEB -- need to try bit vector representation of sets, to see if we
 ;; can get better divergence behavior.

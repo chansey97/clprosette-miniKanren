@@ -1,3 +1,7 @@
+#lang racket
+(require "mk.rkt")
+(provide (all-defined-out))
+
 (define (lookupo x env val)
   (fresh (y v rest)
          (== `((,y . ,v) . ,rest) env)

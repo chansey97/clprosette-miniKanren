@@ -1,3 +1,7 @@
+#lang racket
+(require "./mk.rkt")
+(provide (all-defined-out))
+
 ;;; The following example is adapted from:
 ;;;
 ;;; https://github.com/webyrd/polyconf-2015/blob/master/talk-code/while-interpreter/while-abort.scm

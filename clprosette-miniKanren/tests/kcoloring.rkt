@@ -1,3 +1,8 @@
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(printf "kcoloring.rkt\n")
+
 ;; http://www.dmi.unipg.it/~formis/papers/JETAI07.pdf
 ;; p. 7
 ;; problem in CLP(FD)
@@ -88,3 +93,5 @@
 (test "3coloring"
       (run* (q) (coloringo 3 q))
       '((3 2 1) (3 1 2) (2 3 1) (1 3 2) (1 2 3) (2 1 3)))
+
+;; (run* (q) (coloringo  q))

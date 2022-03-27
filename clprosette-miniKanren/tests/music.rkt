@@ -1,4 +1,7 @@
-(load "require.scm")
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(printf "music.rkt\n")
 
 (define perfect-consonant '(0 5 7))
 (define consonant '(0 3 4 5 7 8 9))

@@ -1,3 +1,7 @@
+#lang racket
+(require "./mk.rkt")
+(provide (all-defined-out))
+
 ;; Add memo-lambda form, and pass around a list of memo tables (which themselves are association lists) as an argument
 ;;
 ;; match is currently commented out, since threading through the table appears tedious and error prone

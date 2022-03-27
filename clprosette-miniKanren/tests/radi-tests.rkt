@@ -1,5 +1,8 @@
-(load "require.scm")
-(load "radi.scm")
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(require "radi.rkt")
+(printf "radi-tests.rkt\n")
 
 (test "set-unionso-0"
       (run* [q]

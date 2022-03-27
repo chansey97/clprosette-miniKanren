@@ -1,3 +1,7 @@
+#lang racket
+(require "mk.rkt")
+(provide (all-defined-out))
+
 (define (map-singletono k v m)
   (== `((,k ,v)) m))
 

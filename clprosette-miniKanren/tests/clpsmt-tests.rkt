@@ -1,3 +1,9 @@
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(require "full-interp-with-let.rkt")
+(printf "clpsmt-tests.rkt\n")
+
 (define faco
   (lambda (n out)
     (fresh ()

@@ -1,4 +1,8 @@
-(load "require.scm")
+#lang racket
+(require "mk.rkt")
+(require "mk-streaming-interface.rkt")
+(require "test-check.rkt")
+(printf "twenty-four-puzzle-smart.rkt\n")
 
 ;;; Classic 24 math puzzle, as described at:
 ;;;

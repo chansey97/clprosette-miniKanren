@@ -1,6 +1,8 @@
-(load "require.scm")
-(load "interp-program-synthesizer-blog-post.scm")
-
+#lang racket
+(require "./mk.rkt")
+(require "./test-check.rkt")
+(require "./interp-program-synthesizer-blog-post.rkt")
+(printf "program-synthesizer-blog-post.rkt\n")
 
 ;; Attempt to use miniKanren + SMT to solve synthesis problems described in the blog post:
 
@@ -393,45 +395,45 @@
                          '(#t #t))))
       '((0 1 (+ (* x 8) (+ x x)))))
 
-#!eof
+;; #!eof
 
-(test "challenge-6-aa"
-      (run* (q)
-            (fresh (body e1 e2 y z)
-                   (numbero y)
-                   (numbero z)
-                   (=/= y z)
-                   (== `(+ ,e1 ,e2) body)
-                   (== (list y body) q)
-                   (evalo `(let ((plus (lambda (a b) (+ a b))))
-                             (let ((mul (lambda (a b) (* a b))))
-                               (let ((square (lambda (a) (* a a))))
-                                 (let ((f (lambda (x) ,body)))
-                                   (equal? (mul 10 ',y) (f ',y))))))
-                          #t)))
-      '?)
+;; (test "challenge-6-aa"
+;;       (run* (q)
+;;             (fresh (body e1 e2 y z)
+;;                    (numbero y)
+;;                    (numbero z)
+;;                    (=/= y z)
+;;                    (== `(+ ,e1 ,e2) body)
+;;                    (== (list y body) q)
+;;                    (evalo `(let ((plus (lambda (a b) (+ a b))))
+;;                              (let ((mul (lambda (a b) (* a b))))
+;;                                (let ((square (lambda (a) (* a a))))
+;;                                  (let ((f (lambda (x) ,body)))
+;;                                    (equal? (mul 10 ',y) (f ',y))))))
+;;                           #t)))
+;;       '?)
 
-(test "challenge-6-d"
-      (run 1 (q)
-           (fresh (body e1 e2 y z)
-                  (numbero y)
-                  (numbero z)
-                  (=/= y z)
-                  (== `(equal? (* 10 x) (+ ,e1 ,e2)) body)
-                  (== (list y body) q)
-                  (evalo `(let ((f (lambda (x) ,body)))
-                            (list (f ',y) (f ',z)))
-                         '(#t #t))))
-      '???)
+;; (test "challenge-6-d"
+;;       (run 1 (q)
+;;            (fresh (body e1 e2 y z)
+;;                   (numbero y)
+;;                   (numbero z)
+;;                   (=/= y z)
+;;                   (== `(equal? (* 10 x) (+ ,e1 ,e2)) body)
+;;                   (== (list y body) q)
+;;                   (evalo `(let ((f (lambda (x) ,body)))
+;;                             (list (f ',y) (f ',z)))
+;;                          '(#t #t))))
+;;       '???)
 
-(test "challenge-6-b"
-      (run 1 (q)
-           (fresh (e1 e2 y z)
-                  (numbero y)
-                  (numbero z)
-                  (=/= y z)
-                  (== `(+ ,e1 ,e2) q)
-                  (evalo `(let ((f (lambda (x) (equal? (* 10 x) ,q))))
-                            (and (f ',y) (f ',z)))
-                         #t)))
-      '?)
+;; (test "challenge-6-b"
+;;       (run 1 (q)
+;;            (fresh (e1 e2 y z)
+;;                   (numbero y)
+;;                   (numbero z)
+;;                   (=/= y z)
+;;                   (== `(+ ,e1 ,e2) q)
+;;                   (evalo `(let ((f (lambda (x) (equal? (* 10 x) ,q))))
+;;                             (and (f ',y) (f ',z)))
+;;                          #t)))
+;;       '?)

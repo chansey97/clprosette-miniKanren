@@ -1,5 +1,9 @@
-(load "require.scm")
-(load "while-abort.scm")
+#lang racket
+(require "./mk.rkt")
+(require "./test-check.rkt")
+(require "./while-abort.rkt")
+(provide (all-defined-out))
+(printf "while-abort-tests.rkt\n")
 
 ;;; Adapted from https://github.com/webyrd/polyconf-2015/blob/master/talk-code/while-interpreter/while-abort-tests.scm
 

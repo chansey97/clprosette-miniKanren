@@ -1,3 +1,7 @@
+#lang racket
+(require "./mk.rkt")
+(provide (all-defined-out))
+
 ;; supports let, begin, apply, set!
 ;;
 ;; expressing-passing, environment-passing, store-passing interpreter

@@ -1,5 +1,8 @@
-(load "require.scm")
-(load "full-interp.scm")
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(require "full-interp.rkt")
+(printf "symbolic-execution-tests.rkt\n")
 
 (test "symbolic-execution-1a"
       (run 10 (q)
@@ -103,7 +106,7 @@
 
 
 
-(load "while-abort.scm")
+(require "while-abort.rkt")
 
 ;;; The following example is adapted from:
 ;;;

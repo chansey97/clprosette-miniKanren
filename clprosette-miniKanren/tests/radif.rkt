@@ -1,3 +1,7 @@
+#lang racket
+(require "mk.rkt")
+(provide (all-defined-out))
+
 ;; A terminating 0cfa abstract interpreter via ADI caching
 ;; based on work by David Darais
 ;; For ADI, see http://david.darais.com/assets/papers/abstracting-definitional-interpreters/adi.pdf

@@ -1,5 +1,8 @@
-(load "require.scm")
-(load "radif.scm")
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(require "radif.rkt")
+(printf "radif-tests.rkt\n")
 
 ;;; WEB
 ;;; set-equivo no longer generates non-sets, but can diverge on a run 2

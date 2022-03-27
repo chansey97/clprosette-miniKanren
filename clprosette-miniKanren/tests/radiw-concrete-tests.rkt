@@ -1,5 +1,8 @@
-(load "require.scm")
-(load "radiw-concrete.scm")
+#lang racket
+(require "mk.rkt")
+(require "test-check.rkt")
+(require "radiw-concrete.rkt")
+(printf "radiw-concrete-tests.rkt\n")
 
 ;; WEB todo
 ;;

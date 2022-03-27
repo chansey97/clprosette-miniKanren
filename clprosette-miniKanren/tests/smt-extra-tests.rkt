@@ -1,4 +1,7 @@
-(load "require.scm")
+#lang racket
+(require "./mk.rkt")
+(require "./test-check.rkt")
+(printf "smt-extra-tests.rkt\n")
 
 (test "conde"
       (run 3 (q)
@@ -94,7 +97,7 @@
             (facto n out)
             (== q `(,n ,out))))
 
-(load "full-interp-with-let.scm")
+(require "full-interp-with-let.rkt")
 (test "evalo-backwards-fib-quoted-6"
   (run 1 (q)
     (evalo `(letrec ((f
