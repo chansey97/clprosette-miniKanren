@@ -26,7 +26,7 @@
 (require "../full-interp-extended.rkt")
 
 ;; (current-bitwidth 8)
-(output-smt #t)
+(output-smt "./")
 (current-solver
  (z3
   #:path "C:/env/z3/z3-4.8.7/z3-4.8.7-x64-win/bin/z3.exe"

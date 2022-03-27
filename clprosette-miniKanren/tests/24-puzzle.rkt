@@ -20,7 +20,7 @@
 (require "../mk.rkt")
 
 ;; (current-bitwidth 8)
-;; (output-smt #t)
+;; (output-smt "./")
 (current-solver
  (z3
   #:options (hash ':smt.random_seed 1
