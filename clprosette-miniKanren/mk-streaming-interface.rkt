@@ -1,6 +1,7 @@
 #lang racket
 (require srfi/19)
 (require "mk.rkt")
+(require "rosette-bridge.rkt")
 (provide (all-defined-out))
 
 ;;; streaming run and run* interface
@@ -13,10 +14,11 @@
   (syntax-rules ()
     ((_ n (q) g0 g ...)
      (begin
-       (z/reset!)
+       (set-counter! -1)
+       (solver-clear (current-solver))
        (streaming-take n 0 (time-second (current-time))
                        (inc
-                        ((fresh (q) g0 g ... z/purge
+                        ((fresh (q) g0 g ... r/purge
                                 (lambdag@ (st)
                                           (let ((st (state-with-scope st nonlocal-scope)))
                                             (let ((z ((reify q) st)))
