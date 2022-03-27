@@ -1,6 +1,7 @@
 #lang racket
-(require "mk.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (printf "old-twenty-four-puzzle.rkt\n")
 
 ;;; Classic 24 math puzzle, as described at:
@@ -25,39 +26,39 @@
       [(numbero expr) (== expr val) (remove-one-elemento expr num* num*^)]
 
       [(fresh (a1 a2 n1 n2 num*^^)
-         (smt-typeo val 'Int)
-         (smt-typeo n1 'Int)
-         (smt-typeo n2 'Int)
+         (rosette-typeo val r/@integer?)
+         (rosette-typeo n1 r/@integer?)
+         (rosette-typeo n2 r/@integer?)
          (== `(+ ,a1 ,a2) expr)
-         (smt-asserto `(= ,val (+ ,n1 ,n2)))
+         (rosette-asserto `(,r/@= ,val (,r/@+ ,n1 ,n2)))
          (puzzleo a1 num* n1 num*^^)
          (puzzleo a2 num*^^ n2 num*^))]
 
       [(fresh (a1 a2 n1 n2 num*^^)
-         (smt-typeo val 'Int)
-         (smt-typeo n1 'Int)
-         (smt-typeo n2 'Int)
+         (rosette-typeo val r/@integer?)
+         (rosette-typeo n1 r/@integer?)
+         (rosette-typeo n2 r/@integer?)
          (== `(- ,a1 ,a2) expr)
-         (smt-asserto `(= ,val (- ,n1 ,n2)))
+         (rosette-asserto `(,r/@= ,val (,r/@- ,n1 ,n2)))
          (puzzleo a1 num* n1 num*^^)
          (puzzleo a2 num*^^ n2 num*^))]
 
       [(fresh (a1 a2 n1 n2 num*^^)
-         (smt-typeo val 'Int)
-         (smt-typeo n1 'Int)
-         (smt-typeo n2 'Int)
+         (rosette-typeo val r/@integer?)
+         (rosette-typeo n1 r/@integer?)
+         (rosette-typeo n2 r/@integer?)
          (== `(* ,a1 ,a2) expr)
-         (smt-asserto `(= ,val (* ,n1 ,n2)))
+         (rosette-asserto `(,r/@= ,val (,r/@* ,n1 ,n2)))
          (puzzleo a1 num* n1 num*^^)
          (puzzleo a2 num*^^ n2 num*^))]
 
       [(fresh (a1 a2 n1 n2 num*^^)
-         (smt-typeo val 'Int)
-         (smt-typeo n1 'Int)
-         (smt-typeo n2 'Int)
+         (rosette-typeo val r/@integer?)
+         (rosette-typeo n1 r/@integer?)
+         (rosette-typeo n2 r/@integer?)
          (== `(/ ,a1 ,a2) expr)
-         (smt-asserto `(not (= ,n2 0)))
-         (smt-asserto `(= ,val (div ,n1 ,n2)))
+         (rosette-asserto `(,r/@! (,r/@= ,n2 0)))
+         (rosette-asserto `(,r/@= ,val (,r/@/ ,n1 ,n2)))
          (puzzleo a1 num* n1 num*^^)
          (puzzleo a2 num*^^ n2 num*^))]
       

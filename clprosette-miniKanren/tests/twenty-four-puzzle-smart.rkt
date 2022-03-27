@@ -1,8 +1,21 @@
 #lang racket
-(require "mk.rkt")
-(require "mk-streaming-interface.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../mk-streaming-interface.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (printf "twenty-four-puzzle-smart.rkt\n")
+
+(current-solver
+ (z3
+  ;; #:path "C:/env/z3/z3-4.8.7/z3-4.8.7-x64-win/bin/z3.exe"
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
+
 
 ;;; Classic 24 math puzzle, as described at:
 ;;;
@@ -21,20 +34,20 @@
 ;;; do *not* work!
 
 #|
-;;; Original defn of remove-one-elemento, using (== x a) rather than (smt-asserto `(= ,x ,a)).
+;;; Original defn of remove-one-elemento, using (== x a) rather than (rosette-asserto `(,r/@= ,x ,a)).
 ;;; Which version is preferable?
 ;;; What are the tradeoffs?
 
 (define remove-one-elemento
-  (lambda (x ls out)
-    (fresh (a d)
-           (== `(,a . ,d) ls)
-           (conde
-            ((== x a) (== d out))
-            ((=/= x a)
-             (fresh (res)
-                    (== `(,a . ,res) out)
-                    (remove-one-elemento x d res)))))))
+(lambda (x ls out)
+(fresh (a d)
+(== `(,a . ,d) ls)
+(conde
+((== x a) (== d out))
+((=/= x a)
+(fresh (res)
+(== `(,a . ,res) out)
+(remove-one-elemento x d res)))))))
 |#
 
 ;;; optimized version, more in the spirit of 24:
@@ -45,52 +58,60 @@
     (fresh (a d)
       (== `(,a . ,d) ls)
       (numbero a)
-      (smt-typeo a 'Int)
-      (smt-typeo x 'Int)
+      (rosette-typeo a r/@integer?)
+      (rosette-typeo x r/@integer?)
       (conde
-        ((smt-asserto `(= ,a ,x))
+        ((rosette-asserto `(,r/@= ,a ,x))
          (== d out))
-        ((smt-asserto `(< ,a ,x))
+        ((rosette-asserto `(,r/@< ,a ,x))
          (fresh (res)
            (== `(,a . ,res) out)
            (remove-one-elemento x d res)))))))
 
+(define (op->r/op op)
+  (cond
+    [(equal? op '+)  r/@+]
+    [(equal? op '-)  r/@-]
+    [(equal? op '*)  r/@*]
+    [(equal? op '/)  r/@/]))
+
 (define puzzleo
   (lambda (expr num* max-ops val num*^ max-ops^)
     (fresh ()
-      (smt-typeo val 'Int)
-      (smt-typeo max-ops 'Int)
-      (smt-typeo max-ops^ 'Int)
+      (rosette-typeo val r/@integer?)
+      (rosette-typeo max-ops r/@integer?)
+      (rosette-typeo max-ops^ r/@integer?)
       
       (conde
         
         [(numbero expr)
-         (smt-typeo expr 'Int)
+         (rosette-typeo expr r/@integer?)
          ;; Originally used (== expr val).
          ;; Which version is preferable?
          ;; What are the tradeoffs?
-         (smt-asserto `(and (= ,expr ,val) (= ,max-ops ,max-ops^)))
+         (rosette-asserto `(,r/@&& (,r/@= ,expr ,val) (,r/@= ,max-ops ,max-ops^)))
          (remove-one-elemento expr num* num*^)]
 
         [(fresh (op e1 e2 n1 n2 num*^^ max-ops-1 max-ops^^)
-           (smt-typeo n1 'Int)
-           (smt-typeo n2 'Int)
-           (smt-typeo max-ops-1 'Int)
+           (rosette-typeo n1 r/@integer?)
+           (rosette-typeo n2 r/@integer?)
+           (rosette-typeo max-ops-1 r/@integer?)
            (== `(,op ,e1 ,e2) expr)
            (conde
              [(conde
                 [(== '+ op)]
                 [(== '* op)])
-              (smt-asserto `(and (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1) (= ,val (,op ,n1 ,n2))))
+              (project (op)
+                (rosette-asserto `(,r/@&& (,r/@< 0 ,max-ops) (,r/@= (,r/@- ,max-ops 1) ,max-ops-1) (,r/@= ,val (,(op->r/op op) ,n1 ,n2)))))
               (conde
                 ;; break symmetry for commutative operators
                 [(numbero e1)
                  (numbero e2)
-                 (smt-typeo e1 'Int)
-                 (smt-typeo e2 'Int)
-                 (smt-asserto `(<= ,e1 ,e2))]
+                 (rosette-typeo e1 r/@integer?)
+                 (rosette-typeo e2 r/@integer?)
+                 (rosette-asserto `(,r/@<= ,e1 ,e2))]
                 [(numbero e1)
-                 (smt-typeo e1 'Int)
+                 (rosette-typeo e1 r/@integer?)
                  (fresh (o2 a2 b2)
                    (== `(,o2 ,a2 ,b2) e2))]
                 [(fresh (o1 a1 b1)
@@ -98,9 +119,9 @@
                  (fresh (o2 a2 b2)
                    (== `(,o2 ,a2 ,b2) e2))])]
              [(== '- op)
-              (smt-asserto `(and (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1) (= ,val (,op ,n1 ,n2))))]
+              (rosette-asserto `(,r/@&& (,r/@< 0 ,max-ops) (,r/@= (,r/@- ,max-ops 1) ,max-ops-1) (,r/@= ,val (,r/@- ,n1 ,n2))))]
              [(== '/ op)
-              (smt-asserto `(and (< 0 ,max-ops) (= (- ,max-ops 1) ,max-ops-1) (not (= ,n2 0)) (= ,val (div ,n1 ,n2))))])
+              (rosette-asserto `(,r/@&& (,r/@< 0 ,max-ops) (,r/@= (,r/@- ,max-ops 1) ,max-ops-1) (,r/@! (,r/@= ,n2 0)) (,r/@= ,val (,r/@/ ,n1 ,n2))))])
            (puzzleo e1 num* max-ops-1 n1 num*^^ max-ops^^)
            (puzzleo e2 num*^^ max-ops^^ n2 num*^ max-ops^))]
         
@@ -143,6 +164,9 @@
   (run* (e) (== '(+ 8 (+ 1 (+ 1 1))) e) (puzzle-drivero e '(1 1 1 8)))
   '())
 
+;; mock
+(define z3-counter-check-sat 0)
+(define z3-counter-get-model 0)
 
 ;; *** z3-counter-check-sat count: 28203
 ;; *** z3-counter-get-model count: 41

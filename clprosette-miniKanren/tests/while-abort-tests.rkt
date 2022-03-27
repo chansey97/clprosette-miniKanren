@@ -1,6 +1,7 @@
 #lang racket
-(require "./mk.rkt")
-(require "./test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (require "./while-abort.rkt")
 (provide (all-defined-out))
 (printf "while-abort-tests.rkt\n")
@@ -102,12 +103,12 @@
   (run 8 (q)
     (fresh (alpha beta gamma s)
       (== (list alpha beta gamma s) q)
-      (smt-typeo alpha 'Int)
-      (smt-typeo beta 'Int)
-      (smt-typeo gamma 'Int)
-      (smt-asserto `(<= 0 ,alpha))
-      (smt-asserto `(<= 0 ,beta))
-      (smt-asserto `(<= 0 ,gamma))
+      (rosette-typeo alpha r/@integer?)
+      (rosette-typeo beta r/@integer?)
+      (rosette-typeo gamma r/@integer?)
+      (rosette-asserto `(,r/@<= 0 ,alpha))
+      (rosette-asserto `(,r/@<= 0 ,beta))
+      (rosette-asserto `(,r/@<= 0 ,gamma))
       (->o
        `(,symbolic-exec-prog
          ((a . ,alpha)

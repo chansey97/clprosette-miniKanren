@@ -1,5 +1,5 @@
 #lang racket
-(require "mk.rkt")
+(require "../mk.rkt")
 (provide (all-defined-out))
 
 (define (map-singletono k v m)

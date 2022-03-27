@@ -1,6 +1,7 @@
 #lang racket
-(require "./mk.rkt")
-(require "./test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (require "./interp-program-synthesizer-blog-post.rkt")
 (printf "program-synthesizer-blog-post.rkt\n")
 
@@ -142,6 +143,12 @@
 (interpret (plus (square 7) 3)) => 52
 |#
 
+(define (op->r/op op)
+  (cond
+    [(equal? op '+)  r/@+]
+    [(equal? op '-)  r/@-]
+    [(equal? op '*)  r/@*]
+    [(equal? op '/)  r/@/]))
 
 (define interpreto
   (lambda (p val)
@@ -152,9 +159,9 @@
         [(fresh (a n)
            (== `(square ,a) p)
            (numbero n)
-           (smt-typeo n 'Int)
-           (smt-typeo val 'Int)
-           (smt-asserto `(= ,val (* ,n ,n)))
+           (rosette-typeo n r/@integer?)
+           (rosette-typeo val r/@integer?)
+           (rosette-asserto `(,r/@= ,val (,r/@* ,n ,n)))
            (interpreto a n))]
         [(fresh (prim op a b n m)
            (== `(,prim ,a ,b) p)
@@ -163,10 +170,11 @@
              [(== 'mul prim) (== '* op)])
            (numbero n)
            (numbero m)
-           (smt-typeo n 'Int)
-           (smt-typeo m 'Int)
-           (smt-typeo val 'Int)
-           (smt-asserto `(= ,val (,op ,n ,m)))
+           (rosette-typeo n r/@integer?)
+           (rosette-typeo m r/@integer?)
+           (rosette-typeo val r/@integer?)
+           (project (op)
+             (rosette-asserto `(,r/@= ,val (,(op->r/op op) ,n ,m))))
            (interpreto a n)
            (interpreto b m))]))))
 
@@ -308,12 +316,12 @@
       (=/= x y)
       (numbero two-x)
       (numbero two-y)
-      (smt-typeo two-x 'Int)
-      (smt-typeo two-y 'Int)
-      (smt-typeo x 'Int)
-      (smt-typeo y 'Int)
-      (smt-asserto `(= ,two-x (+ ,x ,x)))
-      (smt-asserto `(= ,two-y (+ ,y ,y)))
+      (rosette-typeo two-x r/@integer?)
+      (rosette-typeo two-y r/@integer?)
+      (rosette-typeo x r/@integer?)
+      (rosette-typeo y r/@integer?)
+      (rosette-asserto `(,r/@= ,two-x (,r/@+ ,x ,x)))
+      (rosette-asserto `(,r/@= ,two-y (,r/@+ ,y ,y)))
       (interpreto `(mul ,c ,x) two-x)
       (interpreto `(mul ,c ,y) two-y)))
   '((2 1 -1)

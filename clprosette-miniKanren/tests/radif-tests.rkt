@@ -1,6 +1,6 @@
 #lang racket
-(require "mk.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../test-check.rkt")
 (require "radif.rkt")
 (printf "radif-tests.rkt\n")
 

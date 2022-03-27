@@ -1,5 +1,5 @@
 #lang racket
-(require "mk.rkt")
+(require "../mk.rkt")
 (provide (all-defined-out))
 
 ;; A terminating 0cfa abstract interpreter via ADI caching

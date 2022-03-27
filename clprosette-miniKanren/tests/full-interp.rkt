@@ -1,5 +1,7 @@
 #lang racket
-(require "./mk.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+
 (provide (all-defined-out))
 
 ;; The definition of 'letrec' is based based on Dan Friedman's code,
@@ -127,6 +129,18 @@
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
+(define (prim-id->r/operator prim-id)
+  (cond
+    [(equal? prim-id '+)  r/@+]
+    [(equal? prim-id '-)  r/@-]
+    [(equal? prim-id '*)  r/@*]
+    [(equal? prim-id '/)  r/@/]
+    [(equal? prim-id '=)  r/@=]
+    [(equal? prim-id '>)  r/@>]
+    [(equal? prim-id '>=) r/@>=]
+    [(equal? prim-id '<)  r/@<]
+    [(equal? prim-id '<=) r/@<=]))
+
 (define (eval-primo prim-id a* val)
   (conde
     [(== prim-id 'cons)
@@ -182,14 +196,16 @@
        (numbero a1)
        (numbero a2)
        (numbero val)
-       (smt-typeo a1 'Int)
-       (smt-typeo a2 'Int)
-       (smt-typeo val 'Int)
+       (rosette-typeo a1 r/@integer?)
+       (rosette-typeo a2 r/@integer?)
+       (rosette-typeo val r/@integer?)
        (conde
          ((== prim-id '/)
-          (smt-asserto `(not (= ,a2 0))))
+          (rosette-asserto `(,r/@! (,r/@= ,a2 0))))
          ((=/= prim-id '/)))
-       (smt-asserto `(= ,val (,prim-id ,a1 ,a2))))]
+       (project (prim-id)
+         (rosette-asserto `(,r/@= ,val (,(prim-id->r/operator prim-id) ,a1 ,a2))))
+       )]
     [(conde
        [(== prim-id '=)]
        [(== prim-id '>)]
@@ -203,11 +219,13 @@
        ;; (list-of-numbero a*)
        (numbero a1)
        (numbero a2)
-       (smt-typeo a1 'Int)
-       (smt-typeo a2 'Int)
-       (conde
-         [(smt-asserto `(,prim-id ,a1 ,a2)) (== #t val)]
-         [(smt-asserto `(not (,prim-id ,a1 ,a2))) (== #f val)]))]
+       (rosette-typeo a1 r/@integer?)
+       (rosette-typeo a2 r/@integer?)
+       (project (prim-id)
+         (conde
+           [(rosette-asserto `(,(prim-id->r/operator prim-id) ,a1 ,a2)) (== #t val)]
+           [(rosette-asserto `(,r/@! (,(prim-id->r/operator prim-id) ,a1 ,a2))) (== #f val)]))
+       )]
     ))
 
 (define (prim-expo expr env val)

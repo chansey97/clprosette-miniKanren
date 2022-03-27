@@ -1,5 +1,6 @@
 #lang racket
-(require "./mk.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
 (provide (all-defined-out))
 
 ;;; The following example is adapted from:
@@ -75,33 +76,33 @@
      
      [(symbolo expr) (store-lookupo expr s num)]
 
-     ;; Perhaps should use (smt-asserto `(= ,expr ,num)) instead of (== expr num)
+     ;; Perhaps should use (rosette-asserto `(,r/@= ,expr ,num)) instead of (== expr num)
      [(numbero expr) (== expr num)]
 
      [(fresh (a1 a2 n1 n2)
              (== `(+ ,a1 ,a2) expr)
-             (smt-typeo num 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (smt-asserto `(= ,num (+ ,n1 ,n2)))
+             (rosette-typeo num r/@integer?)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
+             (rosette-asserto `(,r/@= ,num (,r/@+ ,n1 ,n2)))
              (Ao a1 s n1)
              (Ao a2 s n2))]
 
      [(fresh (a1 a2 n1 n2)
              (== `(- ,a1 ,a2) expr)
-             (smt-typeo num 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (smt-asserto `(= ,num (- ,n1 ,n2)))
+             (rosette-typeo num r/@integer?)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
+             (rosette-asserto `(,r/@= ,num (,r/@- ,n1 ,n2)))
              (Ao a1 s n1)
              (Ao a2 s n2))]
 
      [(fresh (a1 a2 n1 n2)
              (== `(* ,a1 ,a2) expr)
-             (smt-typeo num 'Int)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
-             (smt-asserto `(= ,num (* ,n1 ,n2)))
+             (rosette-typeo num r/@integer?)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
+             (rosette-asserto `(,r/@= ,num (,r/@* ,n1 ,n2)))
              (Ao a1 s n1)
              (Ao a2 s n2))]
      
@@ -137,41 +138,41 @@
      
      [(fresh (a1 a2 n1 n2)
              (== `(= ,a1 ,a2) expr)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
              (conde
-              [(== 'tt val) (smt-asserto `(= ,n1 ,n2))]
-              [(== 'ff val) (smt-asserto `(not (= ,n1 ,n2)))])         
+              [(== 'tt val) (rosette-asserto `(,r/@= ,n1 ,n2))]
+              [(== 'ff val) (rosette-asserto `(,r/@! (,r/@= ,n1 ,n2)))])         
              (Ao a1 s n1)
              (Ao a2 s n2))]
 
      [(fresh (a1 a2 n1 n2)
              (== `(!= ,a1 ,a2) expr)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
              (conde
-              [(== 'tt val) (smt-asserto `(not (= ,n1 ,n2)))]
-              [(== 'ff val) (smt-asserto `(= ,n1 ,n2))])         
+              [(== 'tt val) (rosette-asserto `(,r/@! (,r/@= ,n1 ,n2)))]
+              [(== 'ff val) (rosette-asserto `(,r/@= ,n1 ,n2))])         
              (Ao a1 s n1)
              (Ao a2 s n2))]
 
      [(fresh (a1 a2 n1 n2)
              (== `(< ,a1 ,a2) expr)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
              (conde
-              [(== 'tt val) (smt-asserto `(< ,n1 ,n2))]
-              [(== 'ff val) (smt-asserto `(<= ,n2 ,n1))])
+              [(== 'tt val) (rosette-asserto `(,r/@< ,n1 ,n2))]
+              [(== 'ff val) (rosette-asserto `(,r/@<= ,n2 ,n1))])
              (Ao a1 s n1)         
              (Ao a2 s n2))]
      
      [(fresh (a1 a2 n1 n2)
              (== `(<= ,a1 ,a2) expr)
-             (smt-typeo n1 'Int)
-             (smt-typeo n2 'Int)
+             (rosette-typeo n1 r/@integer?)
+             (rosette-typeo n2 r/@integer?)
              (conde
-              [(== 'tt val) (smt-asserto `(<= ,n1 ,n2))]
-              [(== 'ff val) (smt-asserto `(< ,n2 ,n1))])
+              [(== 'tt val) (rosette-asserto `(,r/@<= ,n1 ,n2))]
+              [(== 'ff val) (rosette-asserto `(,r/@< ,n2 ,n1))])
              (Ao a1 s n1)
              (Ao a2 s n2))]
 

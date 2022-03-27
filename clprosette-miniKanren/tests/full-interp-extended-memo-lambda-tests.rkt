@@ -1,6 +1,7 @@
 #lang racket
-(require "./mk.rkt")
-(require "./test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (require "./full-interp-extended-memo-lambda.rkt")
 (printf "full-interp-extended-memo-lambda-tests.rkt\n")
 

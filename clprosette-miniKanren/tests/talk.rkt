@@ -7,8 +7,9 @@
 ;; We describe the simple implementation and illustrate the technology through interpreters, synthesis, and symbolic execution.
 
 #lang racket
-(require "./mk.rkt")
-(require "./test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (printf "talk.rkt\n")
 
 (module+ appendo
@@ -124,44 +125,44 @@
 
   (test "basic-1"
     (run* (q)
-      (smt-typeo q 'Int)
-      (smt-asserto `(> ,q 0))
-      (smt-asserto `(< ,q 2)))
+      (rosette-typeo q r/@integer?)
+      (rosette-asserto `(,r/@> ,q 0))
+      (rosette-asserto `(,r/@< ,q 2)))
     '(1))
 
   (test "basic-2"
     (run 3 (q)
       (fresh (x y)
         (== q `(,x ,y))
-        (smt-typeo x 'Int)
-        (smt-typeo y 'Int)
-        (smt-asserto `(>= ,x 0))
-        (smt-asserto `(>= ,y 0))
-        (smt-asserto `(= ,x (+ ,y 1)))))
+        (rosette-typeo x r/@integer?)
+        (rosette-typeo y r/@integer?)
+        (rosette-asserto `(,r/@>= ,x 0))
+        (rosette-asserto `(,r/@>= ,y 0))
+        (rosette-asserto `(,r/@= ,x (,r/@+ ,y 1)))))
     '((1 0) (2 1) (3 2)))
 
   (test "basic-conde-1"
     (run* (q)
-      (smt-typeo q 'Int)
+      (rosette-typeo q r/@integer?)
       (conde
-        ((smt-asserto `(> ,q 0))
-         (smt-asserto `(< ,q 2)))
-        ((smt-asserto `(= ,q 2)))))
+        ((rosette-asserto `(,r/@> ,q 0))
+         (rosette-asserto `(,r/@< ,q 2)))
+        ((rosette-asserto `(,r/@= ,q 2)))))
     '(2 1))
 
   (define faco
     (lambda (n out)
       (fresh ()
-        (smt-typeo n 'Int)
-        (smt-typeo out 'Int)
-        (conde ((smt-asserto `(= ,n 0))
-                (smt-asserto `(= ,out 1)))
-               ((smt-asserto `(> ,n 0))
+        (rosette-typeo n r/@integer?)
+        (rosette-typeo out r/@integer?)
+        (conde ((rosette-asserto `(,r/@= ,n 0))
+                (rosette-asserto `(,r/@= ,out 1)))
+               ((rosette-asserto `(,r/@> ,n 0))
                 (fresh (n-1 r)
-                  (smt-typeo n-1 'Int)
-                  (smt-typeo r 'Int)
-                  (smt-asserto `(= (- ,n 1) ,n-1))
-                  (smt-asserto `(= (* ,n ,r) ,out))
+                  (rosette-typeo n-1 r/@integer?)
+                  (rosette-typeo r r/@integer?)
+                  (rosette-asserto `(,r/@= (,r/@- ,n 1) ,n-1))
+                  (rosette-asserto `(,r/@= (,r/@* ,n ,r) ,out))
                   (faco n-1 r)))))))
 
   ;; equivalent
@@ -170,14 +171,14 @@
       (fresh ()
         (conde ((== n 0)
                 (== out 1))
-               ((smt-typeo n 'Int)
-                (smt-asserto `(> ,n 0))
+               ((rosette-typeo n r/@integer?)
+                (rosette-asserto `(,r/@> ,n 0))
                 (fresh (n-1 r)
-                  (smt-typeo n-1 'Int)
-                  (smt-typeo r 'Int)
-                  (smt-typeo out 'Int)
-                  (smt-asserto `(= (- ,n 1) ,n-1))
-                  (smt-asserto `(= (* ,n ,r) ,out))
+                  (rosette-typeo n-1 r/@integer?)
+                  (rosette-typeo r r/@integer?)
+                  (rosette-typeo out r/@integer?)
+                  (rosette-asserto `(,r/@= (,r/@- ,n 1) ,n-1))
+                  (rosette-asserto `(,r/@= (,r/@* ,n ,r) ,out))
                   (facto n-1 r)))))))
 
   (test "faco-7"
@@ -354,12 +355,12 @@
     (run 1 (q)
       (fresh (alpha beta gamma s)
         (== (list alpha beta gamma s) q)
-        (smt-typeo alpha 'Int)
-        (smt-typeo beta 'Int)
-        (smt-typeo gamma 'Int)
-        (smt-asserto `(not (= 0 ,alpha)))
-        (smt-asserto `(<= 0 ,beta))
-        (smt-asserto `(<= 0 ,gamma))
+        (rosette-typeo alpha r/@integer?)
+        (rosette-typeo beta r/@integer?)
+        (rosette-typeo gamma r/@integer?)
+        (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
+        (rosette-asserto `(,r/@<= 0 ,beta))
+        (rosette-asserto `(,r/@<= 0 ,gamma))
         (->o
          `(,symbolic-exec-prog
            ((a . ,alpha)
@@ -372,8 +373,8 @@
     (run 1 (q)
       (fresh (alpha beta gamma s)
         (== (list alpha beta gamma s) q)
-        (smt-typeo alpha 'Int)
-        (smt-asserto `(not (= 0 ,alpha)))
+        (rosette-typeo alpha r/@integer?)
+        (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
         (->o
          `(,symbolic-exec-prog
            ((a . ,alpha)
@@ -386,8 +387,8 @@
     (run 8 (q)
       (fresh (alpha beta gamma s)
         (== (list alpha beta gamma s) q)
-        (smt-typeo beta 'Int)
-        (smt-asserto `(not (= 0 ,beta)))
+        (rosette-typeo beta r/@integer?)
+        (rosette-asserto `(,r/@! (,r/@= 0 ,beta)))
         (->o
          `(,symbolic-exec-prog
            ((a . ,alpha)
@@ -444,5 +445,6 @@
   (require (submod ".." full-interp))
   (require (submod ".." while-abort))
   (require (submod ".." full-interp-2))
+  
   )
 

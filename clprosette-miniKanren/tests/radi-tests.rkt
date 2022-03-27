@@ -1,6 +1,7 @@
 #lang racket
-(require "mk.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (require "radi.rkt")
 (printf "radi-tests.rkt\n")
 

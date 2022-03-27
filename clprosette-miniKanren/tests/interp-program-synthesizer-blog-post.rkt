@@ -1,5 +1,6 @@
 #lang racket
-(require "./mk.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
 (provide (all-defined-out))
 
 ;; The definition of 'letrec' is based based on Dan Friedman's code,
@@ -139,6 +140,18 @@
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
+(define (prim-id->r/operator prim-id)
+  (cond
+    [(equal? prim-id '+)  r/@+]
+    [(equal? prim-id '-)  r/@-]
+    [(equal? prim-id '*)  r/@*]
+    [(equal? prim-id '/)  r/@/]
+    [(equal? prim-id '=)  r/@=]
+    [(equal? prim-id '>)  r/@>]
+    [(equal? prim-id '>=) r/@>=]
+    [(equal? prim-id '<)  r/@<]
+    [(equal? prim-id '<=) r/@<=]))
+
 (define (eval-primo prim-id a* val)
   (conde
     [(== prim-id 'cons)
@@ -186,9 +199,9 @@
        (== `(,a) a*)
        (numbero a)
        (numbero val)
-       (smt-typeo a 'Int)
-       (smt-typeo val 'Int)
-       (smt-asserto `(= ,val (- 0 ,a))))]
+       (rosette-typeo a r/@integer?)
+       (rosette-typeo val r/@integer?)
+       (rosette-asserto `(,r/@= ,val (,r/@- 0 ,a))))]
     [(conde
        [(== prim-id '+)]
        [(== prim-id '-)]
@@ -202,20 +215,22 @@
        (numbero a1)
        (numbero a2)
        (numbero val)
-       (smt-typeo a1 'Int)
-       (smt-typeo a2 'Int)
-       (smt-typeo val 'Int)
-       (smt-asserto `(= ,val (,prim-id ,a1 ,a2))))]
+       (rosette-typeo a1 r/@integer?)
+       (rosette-typeo a2 r/@integer?)
+       (rosette-typeo val r/@integer?)
+       (project (prim-id)
+         (rosette-asserto `(,r/@= ,val (,(prim-id->r/operator prim-id) ,a1 ,a2))))
+       )]
     [(== prim-id '!=)
      (fresh (a1 a2)
        (== `(,a1 ,a2) a*)
        (numbero a1)
        (numbero a2)
-       (smt-typeo a1 'Int)
-       (smt-typeo a2 'Int)
+       (rosette-typeo a1 r/@integer?)
+       (rosette-typeo a2 r/@integer?)
        (conde
-         [(== #t val) (smt-asserto `(not (= ,a1 ,a2)))]
-         [(== #f val) (smt-asserto `(= ,a1 ,a2))]))]
+         [(== #t val) (rosette-asserto `(,r/@! (,r/@= ,a1 ,a2)))]
+         [(== #f val) (rosette-asserto `(,r/@= ,a1 ,a2))]))]
     [(conde
        [(== prim-id '=)]
        [(== prim-id '>)]
@@ -229,11 +244,13 @@
        ;; (list-of-numbero a*)
        (numbero a1)
        (numbero a2)
-       (smt-typeo a1 'Int)
-       (smt-typeo a2 'Int)
-       (conde
-         [(== #t val) (smt-asserto `(,prim-id ,a1 ,a2))]
-         [(== #f val) (smt-asserto `(not (,prim-id ,a1 ,a2)))]))]
+       (rosette-typeo a1 r/@integer?)
+       (rosette-typeo a2 r/@integer?)
+       (project (prim-id)
+         (conde
+           [(== #t val) (rosette-asserto `(,(prim-id->r/operator prim-id) ,a1 ,a2))]
+           [(== #f val) (rosette-asserto `(,r/@! (,(prim-id->r/operator prim-id) ,a1 ,a2)))]))
+       )]
     ))
 
 (define (prim-expo expr env val)

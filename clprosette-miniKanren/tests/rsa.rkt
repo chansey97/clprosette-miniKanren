@@ -3,9 +3,22 @@
 
 ;; Examples taken from http://doctrina.org/How-RSA-Works-With-Examples.html
 
-(require "mk.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (require "full-interp-with-let.rkt")
-(require "test-check.rkt")
+
+(current-solver
+ (z3
+  #:path "C:/env/z3/z3-4.8.7/z3-4.8.7-x64-win/bin/z3.exe"
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ;; ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
+
 (printf "rsa.rkt\n")
 
 ;; test 'begin' extension to evalo

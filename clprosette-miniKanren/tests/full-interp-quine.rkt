@@ -1,5 +1,5 @@
 #lang racket
-(require "./mk.rkt")
+(require "../mk.rkt")
 (provide (all-defined-out))
 
 ;; The definition of 'letrec' is based based on Dan Friedman's code,

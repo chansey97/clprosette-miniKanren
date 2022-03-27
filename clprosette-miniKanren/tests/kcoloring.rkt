@@ -1,6 +1,7 @@
 #lang racket
-(require "mk.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (printf "kcoloring.rkt\n")
 
 ;; http://www.dmi.unipg.it/~formis/papers/JETAI07.pdf
@@ -34,10 +35,10 @@
     (for-eacho vars
                (lambda (v)
                  (fresh ()
-                   (smt-typeo v 'Int)
-                   (smt-typeo k 'Int)
-                   (smt-asserto `(<= 1 ,v))
-                   (smt-asserto `(<= ,v ,k)))))
+                   (rosette-typeo v r/@integer?)
+                   (rosette-typeo k r/@integer?)
+                   (rosette-asserto `(,r/@<= 1 ,v))
+                   (rosette-asserto `(,r/@<= ,v ,k)))))
     (constraintso edges nodes vars)
     ))
 
@@ -47,9 +48,9 @@
     ((fresh (a b r idfa idfb cola colb)
        (== edges `((,a ,b) . ,r))
        (=/= cola colb)
-       (smt-typeo cola 'Int)
-       (smt-typeo colb 'Int)
-       (smt-asserto `(not (= ,cola ,colb)))
+       (rosette-typeo cola r/@integer?)
+       (rosette-typeo colb r/@integer?)
+       (rosette-asserto `(,r/@! (,r/@= ,cola ,colb)))
        (ntho idfa nodes a) (ntho idfa vars cola)
        (ntho idfb nodes b) (ntho idfb vars colb)
        (constraintso r nodes vars)))))
@@ -57,14 +58,14 @@
 (define (ntho i xs x)
   (fresh (y ys)
     (== `(,y . ,ys) xs)
-    (smt-typeo i 'Int)
+    (rosette-typeo i r/@integer?)
     (conde
-      ((== i 0) (smt-asserto `(= ,i 0))
+      ((== i 0) (rosette-asserto `(,r/@= ,i 0))
                 (== y x))
       ((=/= i 0)
        (fresh (i-1)
-         (smt-typeo i-1 'Int)
-         (smt-asserto `(= ,i (+ ,i-1 1)))
+         (rosette-typeo i-1 r/@integer?)
+         (rosette-asserto `(,r/@= ,i (,r/@+ ,i-1 1)))
          (ntho i-1 ys x))))))
 
 (define (for-eacho vars ro)
@@ -78,20 +79,17 @@
 
 (define (lengtho xs n)
   (fresh ()
-    (smt-typeo n 'Int)
-    (smt-asserto `(>= ,n 0))
+    (rosette-typeo n r/@integer?)
+    (rosette-asserto `(,r/@>= ,n 0))
     (conde
-      ((== xs '()) (== n 0) (smt-asserto `(= ,n 0)))
+      ((== xs '()) (== n 0) (rosette-asserto `(,r/@= ,n 0)))
       ((fresh (x rest n-1)
-         (smt-typeo n-1 'Int)
+         (rosette-typeo n-1 r/@integer?)
          (== `(,x . ,rest) xs)
-         (smt-asserto `(= ,n (+ ,n-1 1)))
+         (rosette-asserto `(,r/@= ,n (,r/@+ ,n-1 1)))
          (lengtho rest n-1))))))
 
 ;; non-deterministic result :(
-#;
 (test "3coloring"
   (run* (q) (coloringo 3 q))
   '((3 2 1) (3 1 2) (2 3 1) (1 3 2) (1 2 3) (2 1 3)))
-
-;; (run* (q) (coloringo  q))

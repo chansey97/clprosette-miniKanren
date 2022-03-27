@@ -1,5 +1,6 @@
 #lang racket
-(require "mk.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
 (provide (all-defined-out))
 
 (define (lookupo x env val)
@@ -28,10 +29,10 @@
        (numbero n2)
        (numbero n3)
        (== `(int ,n3) val)
-       (smt-typeo n1 'Int)
-       (smt-typeo n2 'Int)
-       (smt-typeo n3 'Int)
-       (smt-asserto `(= ,n3 (+ ,n1 ,n2)))
+       (rosette-typeo n1 r/@integer?)
+       (rosette-typeo n2 r/@integer?)
+       (rosette-typeo n3 r/@integer?)
+       (rosette-asserto `(,r/@= ,n3 (,r/@+ ,n1 ,n2)))
        (eval-expro e1 env `(int ,n1))
        (eval-expro e2 env `(int ,n2)))]
     [(fresh (e1 e2 n1 n2 n3)
@@ -40,10 +41,10 @@
        (numbero n2)
        (numbero n3)
        (== `(int ,n3) val)
-       (smt-typeo n1 'Int)
-       (smt-typeo n2 'Int)
-       (smt-typeo n3 'Int)
-       (smt-asserto `(= ,n3 (* ,n1 ,n2)))
+       (rosette-typeo n1 r/@integer?)
+       (rosette-typeo n2 r/@integer?)
+       (rosette-typeo n3 r/@integer?)
+       (rosette-asserto `(,r/@= ,n3 (,r/@* ,n1 ,n2)))
        (eval-expro e1 env `(int ,n1))
        (eval-expro e2 env `(int ,n2)))]
     [(fresh (x y body)
@@ -63,9 +64,9 @@
        (== `(if0 ,e1 ,e2 ,e3) expr)
        (numbero n)
        (eval-expro e1 env `(int ,n))
-       (smt-typeo n 'Int)
+       (rosette-typeo n r/@integer?)
        (conde
-         [(smt-asserto `(= ,n 0))
+         [(rosette-asserto `(,r/@= ,n 0))
           (eval-expro e2 env val)]
-         [(smt-asserto `(not (= ,n 0)))
+         [(rosette-asserto `(,r/@! (,r/@= ,n 0)))
           (eval-expro e3 env val)]))]))

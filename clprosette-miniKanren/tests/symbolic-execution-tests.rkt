@@ -1,6 +1,7 @@
 #lang racket
-(require "mk.rkt")
-(require "test-check.rkt")
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../test-check.rkt")
 (require "full-interp.rkt")
 (printf "symbolic-execution-tests.rkt\n")
 
@@ -187,12 +188,12 @@
   (run 8 (q)
     (fresh (alpha beta gamma s)
       (== (list alpha beta gamma s) q)
-      (smt-typeo alpha 'Int)
-      (smt-typeo beta 'Int)
-      (smt-typeo gamma 'Int)
-      (smt-asserto `(<= 0 ,alpha))
-      (smt-asserto `(<= 0 ,beta))
-      (smt-asserto `(<= 0 ,gamma))
+      (rosette-typeo alpha r/@integer?)
+      (rosette-typeo beta r/@integer?)
+      (rosette-typeo gamma r/@integer?)
+      (rosette-asserto `(,r/@<= 0 ,alpha))
+      (rosette-asserto `(,r/@<= 0 ,beta))
+      (rosette-asserto `(,r/@<= 0 ,gamma))
       (->o
        `(,symbolic-exec-prog
          ((a . ,alpha)
@@ -212,12 +213,12 @@
   (run 1 (q)
     (fresh (alpha beta gamma s)
       (== (list alpha beta gamma s) q)
-      (smt-typeo alpha 'Int)
-      (smt-typeo beta 'Int)
-      (smt-typeo gamma 'Int)
-      (smt-asserto `(not (= 0 ,alpha)))
-      (smt-asserto `(<= 0 ,beta))
-      (smt-asserto `(<= 0 ,gamma))
+      (rosette-typeo alpha r/@integer?)
+      (rosette-typeo beta r/@integer?)
+      (rosette-typeo gamma r/@integer?)
+      (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
+      (rosette-asserto `(,r/@<= 0 ,beta))
+      (rosette-asserto `(,r/@<= 0 ,gamma))
       (->o
        `(,symbolic-exec-prog
          ((a . ,alpha)
@@ -230,8 +231,8 @@
   (run 1 (q)
     (fresh (alpha beta gamma s)
       (== (list alpha beta gamma s) q)
-      (smt-typeo alpha 'Int)
-      (smt-asserto `(not (= 0 ,alpha)))
+      (rosette-typeo alpha r/@integer?)
+      (rosette-asserto `(,r/@! (,r/@= 0 ,alpha)))
       (->o
        `(,symbolic-exec-prog
          ((a . ,alpha)
@@ -244,8 +245,8 @@
   (run 8 (q)
     (fresh (alpha beta gamma s)
       (== (list alpha beta gamma s) q)
-      (smt-typeo beta 'Int)
-      (smt-asserto `(not (= 0 ,beta)))
+      (rosette-typeo beta r/@integer?)
+      (rosette-asserto `(,r/@! (,r/@= 0 ,beta)))
       (->o
        `(,symbolic-exec-prog
          ((a . ,alpha)
