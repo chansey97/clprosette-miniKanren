@@ -45,7 +45,9 @@
           "../rosette/rosette/solver/solution.rkt"
           "../rosette/rosette/solver/smt/z3.rkt"
           "../rosette/rosette/solver/smt/server.rkt") 
-          output-smt
-          current-solver)
+         output-smt
+         (all-from-out
+          "../rosette/rosette/query/eval.rkt")
+         current-solver)
 
 
