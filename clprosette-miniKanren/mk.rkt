@@ -1432,7 +1432,6 @@
               cs))
    D))
 
-;; TODO: For r/function? disquality promotion, by r/exists r/@equal?
 (define (add-rosette-disequality D)
   (lambdag@ (st)
     (let* ((as (filter-rosette-ok? st D))
