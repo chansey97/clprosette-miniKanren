@@ -23,7 +23,10 @@
 (define s/haso
   (lambda (p)
     (lambda (s b)
-      (rosette-asserto `(,s/has ,p ,s ,b)))))
+      (fresh ()
+        (rosette-typeo s (r/bitvector 3))
+        (rosette-typeo b r/@boolean?)
+        (rosette-asserto `(,s/has ,p ,s ,b))))))
 
 ;; (define s/hasnto
 ;;   (lambda (p)
@@ -37,7 +40,10 @@
 (define s/hasnto
   (lambda (p)
     (lambda (s b)
-      (rosette-asserto `(,s/hasnt ,p ,s ,b)))))
+      (fresh ()
+        (rosette-typeo s (r/bitvector 3))
+        (rosette-typeo b r/@boolean?)
+        (rosette-asserto `(,s/hasnt ,p ,s ,b))))))
 
 ;; (define s/chaso
 ;;   (lambda (p)
@@ -51,7 +57,9 @@
 (define s/chaso
   (lambda (p)
     (lambda (s)
-      (rosette-asserto `(,s/chas ,p ,s)))))
+      (fresh ()
+        (rosette-typeo s (r/bitvector 3))
+        (rosette-asserto `(,s/chas ,p ,s))))))
 
 ;; (define s/chasnto
 ;;   (lambda (p)
@@ -65,7 +73,9 @@
 (define s/chasnto
   (lambda (p)
     (lambda (s)
-      (rosette-asserto `(,s/chasnt ,p ,s)))))
+      (fresh ()
+        (rosette-typeo s (r/bitvector 3))
+        (rosette-asserto `(,s/chasnt ,p ,s))))))
 
 
 (define vec-neg (r/bv #b001 3))
@@ -91,7 +101,9 @@
 (define s/iso
   (lambda (p)
     (lambda (s)
-      (rosette-asserto `(,r/@equal? ,s ,p)))))
+      (fresh ()
+        (rosette-typeo s (r/bitvector 3))
+        (rosette-asserto `(,r/@equal? ,s ,p))))))
 (define s/is-nego
   (s/iso vec-neg))
 (define s/is-zeroo
@@ -101,24 +113,34 @@
 
 (define s/uniono
   (lambda (s1 s2 so)
-    (rosette-asserto `(,r/@equal? (,r/@bvor ,s1 ,s2) ,so))))
+    (fresh ()
+      (rosette-typeo s1 (r/bitvector 3))
+      (rosette-typeo s2 (r/bitvector 3))
+      (rosette-typeo so (r/bitvector 3))
+      (rosette-asserto `(,r/@equal? (,r/@bvor ,s1 ,s2) ,so)))))
 
 (define s/is-bito
   (lambda (b)
-    (conde
-      ((rosette-asserto `(,r/@equal? ,b ,vec-neg)))
-      ((rosette-asserto `(,r/@equal? ,b ,vec-zero)))
-      ((rosette-asserto `(,r/@equal? ,b ,vec-pos))))))
+    (fresh ()
+      (rosette-typeo b (r/bitvector 3))
+      (conde
+        ((rosette-asserto `(,r/@equal? ,b ,vec-neg)))
+        ((rosette-asserto `(,r/@equal? ,b ,vec-zero)))
+        ((rosette-asserto `(,r/@equal? ,b ,vec-pos)))))))
 
 (define s/membero
   (lambda (s b)
     (fresh ()
+      (rosette-typeo s (r/bitvector 3))
+      (rosette-typeo b (r/bitvector 3))
       (rosette-asserto `(,r/@equal? (,r/@bvand ,s ,b) ,b))
       (s/is-bito b))))
 
 (define s/alphao
   (lambda (n s)
     (fresh ()
+      (rosette-typeo n r/@integer?)
+      (rosette-typeo s (r/bitvector 3))
       (conde
         ((rosette-asserto `(,r/@< ,n 0))
          (s/is-nego  s))
@@ -137,7 +159,10 @@
 
 (define s/z3-alphao
   (lambda (n s)
-    (rosette-asserto `(,s/z3-alpha ,n ,s))))
+    (fresh ()
+      (rosette-typeo n r/@integer?)
+      (rosette-typeo s (r/bitvector 3))
+      (rosette-asserto `(,s/z3-alpha ,n ,s)))))
 
 ;; For example,
 ;; {−,0}⊕{−}={−} and {−}⊕{+}={−,0,+}.
@@ -145,31 +170,41 @@
 
 (define s/plus-alphao
   (lambda (s1 s2 so)
-    (conde
-      ((s/is-zeroo s1)
-       (rosette-asserto `(,r/@equal? ,so ,s2)))
-      ((s/is-zeroo s2)
-       (rosette-asserto `(,r/@equal? ,so ,s1)))
-      ((s/is-nego s1)
-       (s/is-nego s2)
-       (s/is-nego so))
-      ((s/is-poso s1)
-       (s/is-poso s2)
-       (s/is-poso so))
-      ((s/is-nego s1)
-       (s/is-poso s2)
-       (rosette-asserto `(,r/@equal? ,so ,(r/bv #b111 3))))
-      ((s/is-poso s1)
-       (s/is-nego s2)
-       (rosette-asserto `(,r/@equal? ,so ,(r/bv #b111 3)))))))
+    (fresh ()
+      (rosette-typeo s1 (r/bitvector 3))
+      (rosette-typeo s2 (r/bitvector 3))
+      (rosette-typeo so (r/bitvector 3))
+      (conde
+        ((s/is-zeroo s1)
+         (rosette-asserto `(,r/@equal? ,so ,s2)))
+        ((s/is-zeroo s2)
+         (rosette-asserto `(,r/@equal? ,so ,s1)))
+        ((s/is-nego s1)
+         (s/is-nego s2)
+         (s/is-nego so))
+        ((s/is-poso s1)
+         (s/is-poso s2)
+         (s/is-poso so))
+        ((s/is-nego s1)
+         (s/is-poso s2)
+         (rosette-asserto `(,r/@equal? ,so ,(r/bv #b111 3))))
+        ((s/is-poso s1)
+         (s/is-nego s2)
+         (rosette-asserto `(,r/@equal? ,so ,(r/bv #b111 3))))))))
 
 (define s/containso
   (lambda (s1 s2)
-    (rosette-asserto `(,r/@equal? (,r/@bvor ,s1 ,s2) ,s1))))
+    (fresh ()
+      (rosette-typeo s1 (r/bitvector 3))
+      (rosette-typeo s2 (r/bitvector 3))
+      (rosette-asserto `(,r/@equal? (,r/@bvor ,s1 ,s2) ,s1)))))
 
 (define s/pluso
   (lambda (s1 s2 so)
     (fresh ()
+      (rosette-typeo s1 (r/bitvector 3))
+      (rosette-typeo s2 (r/bitvector 3))
+      (rosette-typeo so (r/bitvector 3))
       (conde ((s/chas-zeroo s1)
               (s/containso so s2))
              ((s/chasnt-zeroo s1)))
@@ -330,13 +365,17 @@
           (if (null? es)
               fail
               (let ((e (car es)))
-                (conde
-                  ((rosette-asserto `(,r/@equal? ,(bitvec->r/bv (car e))   ,s1))
-                   (rosette-asserto `(,r/@equal? ,(bitvec->r/bv (cadr e))  ,s2))
-                   (rosette-asserto `(,r/@equal? ,(bitvec->r/bv (caddr e)) ,so)))
-                  ((rosette-asserto `(,r/@|| (,r/@! (,r/@equal? ,(bitvec->r/bv (car e))  ,s1))
-                                             (,r/@! (,r/@equal? ,(bitvec->r/bv (cadr e)) ,s2))))
-                   (itero (cdr es))))))))
+                (fresh ()
+                  (rosette-typeo s1 (r/bitvector 3))
+                  (rosette-typeo s2 (r/bitvector 3))
+                  (rosette-typeo so (r/bitvector 3))
+                  (conde
+                    ((rosette-asserto `(,r/@equal? ,(bitvec->r/bv (car e))   ,s1))
+                     (rosette-asserto `(,r/@equal? ,(bitvec->r/bv (cadr e))  ,s2))
+                     (rosette-asserto `(,r/@equal? ,(bitvec->r/bv (caddr e)) ,so)))
+                    ((rosette-asserto `(,r/@|| (,r/@! (,r/@equal? ,(bitvec->r/bv (car e))  ,s1))
+                                               (,r/@! (,r/@equal? ,(bitvec->r/bv (cadr e)) ,s2))))
+                     (itero (cdr es)))))))))
       (itero table))))
 
 (define s/plus-tableo  (s/op-tableo (op-table plus-abstract)))
@@ -374,7 +413,12 @@
   (lambda (table)
     (lambda (s1 s2 so)
       (let ((f (s/z3-op-table table)))
-        (rosette-asserto `(,f ,s1 ,s2 ,so))))))
+        (fresh ()
+          (rosette-typeo s1 (r/bitvector 3))
+          (rosette-typeo s2 (r/bitvector 3))
+          (rosette-typeo so (r/bitvector 3))
+          (rosette-asserto `(,f ,s1 ,s2 ,so)))
+        ))))
 
 (define s/z3-plus-tableo  (s/z3-op-tableo (op-table plus-abstract)))
 (define s/z3-times-tableo (s/z3-op-tableo (op-table times-abstract)))
@@ -409,6 +453,9 @@
   (lambda (table)
     (lambda (s1 so)
       (let ((f (s/z3-op1-table table)))
-        (rosette-asserto `(,f ,s1 ,so))))))
+        (fresh ()
+          (rosette-typeo s1 (r/bitvector 3))
+          (rosette-typeo so (r/bitvector 3))
+          (rosette-asserto `(,f ,s1 ,so)))))))
 
 (define s/z3-sub1-tableo (s/z3-op1-tableo (op1-table sub1-abstract)))
