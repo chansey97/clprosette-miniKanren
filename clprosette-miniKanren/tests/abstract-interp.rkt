@@ -1,7 +1,20 @@
-(load "mk.scm")
-(load "z3-driver.scm")
-(load "sign-domain.scm")
-(load "test-check.scm")
+#lang racket
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../logging.rkt")
+(require "../test-check.rkt")
+(require "sign-domain.rkt")
+
+(current-solver
+ (z3
+  #:path "C:/env/z3/z3-4.8.7/z3-4.8.7-x64-win/bin/z3.exe"
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ;; ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
 
 ;;; abstract interpreter, inspired by the interpreter in:
 ;;;
