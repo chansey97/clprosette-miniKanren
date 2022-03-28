@@ -1,8 +1,21 @@
-;(load "mk.scm")
-;(load "z3-driver.scm")
-(load "../clpsmt-miniKanren/sign-domain.scm")
-;(load "test-check.scm")
-(load "../clpsmt-miniKanren/full-abstract-interp-extended.scm")
+#lang racket
+(require "../mk.rkt")
+(require "../rosette-bridge.rkt")
+(require "../logging.rkt")
+(require "../test-check.rkt")
+(require "sign-domain.rkt")
+(require "full-abstract-interp-extended.rkt")
+
+(current-solver
+ (z3
+  #:path "C:/env/z3/z3-4.8.7/z3-4.8.7-x64-win/bin/z3.exe"
+  #:options (hash ':smt.random_seed 1
+                  ;; ':smt.random_seed 2
+                  ;; ':smt.random_seed 3
+                  ;; ':smt.arith.solver 1
+                  ;; ':smt.arith.solver 2 ; default:2 in z3-4.8.7
+                  ;; ':smt.arith.solver 6 ; default:6 in z3-4.8.12
+                  )))
 
 ;;; WEB stopping point:  21 April 02018
 ;;;
@@ -139,273 +152,273 @@
     (num bitvec-110)
     (num bitvec-111)))
 
-#!eof
+;; #!eof
 
-;;; would tabling make this terminate?
-;;;
-;;; does this version avoid returning (num bitvec-111)?
-;;;
-;;; need to support <
-(test "evalo-!-6-rich"
-  (run 3 (q)
-    (evalo `(letrec ((! (lambda (n)
-                          (if (< n 0)
-                              #f
-                              (if (= n 0)
-                                  1
-                                  (* n (! (sub1 n))))))))
-              (! 6))
-           q))
-  '(720))
+;; ;;; would tabling make this terminate?
+;; ;;;
+;; ;;; does this version avoid returning (num bitvec-111)?
+;; ;;;
+;; ;;; need to support <
+;; (test "evalo-!-6-rich"
+;;   (run 3 (q)
+;;     (evalo `(letrec ((! (lambda (n)
+;;                           (if (< n 0)
+;;                               #f
+;;                               (if (= n 0)
+;;                                   1
+;;                                   (* n (! (sub1 n))))))))
+;;               (! 6))
+;;            q))
+;;   '(720))
 
-#!eof
+;; #!eof
 
-;;; old and broken tests
+;; ;;; old and broken tests
 
-;;; FIX this
-#|
-(test "evalo-backwards-1"
-  (run 1 (q)
-    (evalo `(+ 0 ',q) '(num bitvec-100)))
-  '(3))
-|#
+;; ;;; FIX this
+;; #|
+;; (test "evalo-backwards-1"
+;;   (run 1 (q)
+;;     (evalo `(+ 0 ',q) '(num bitvec-100)))
+;;   '(3))
+;; |#
 
-(test "evalo-bop-1"
-  (run* (q)
-    (evalo `((lambda (n) (< n 0)) 0) q))
-  '(#f))
+;; (test "evalo-bop-1"
+;;   (run* (q)
+;;     (evalo `((lambda (n) (< n 0)) 0) q))
+;;   '(#f))
 
-(test "evalo-2"
-  (run* (q)
-    (evalo `(((lambda (f)
-                (lambda (n) (if (< n 0) #f
-                           (if (= n 0) 1
-                               (* n (f (- n 1)))))))
-              (lambda (x) 1))
-             2)
-           q))
-  '(2))
-
-
-(test "evalo-fac-6"
-  (run* (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (fac 6))
-           q))
-  '(720))
-
-;; slowish
-(test "evalo-fac-9"
-  (run* (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (fac 9))
-           q))
-  '(362880))
-
-(test "evalo-backwards-fac-6"
-  (run 1 (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (fac ,q))
-           720))
-  '(6))
-
-;; remember the quote!
-(test "evalo-backwards-fac-quoted-6"
-  (run* (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (fac ',q))
-           720))
-  '(6))
+;; (test "evalo-2"
+;;   (run* (q)
+;;     (evalo `(((lambda (f)
+;;                 (lambda (n) (if (< n 0) #f
+;;                            (if (= n 0) 1
+;;                                (* n (f (- n 1)))))))
+;;               (lambda (x) 1))
+;;              2)
+;;            q))
+;;   '(2))
 
 
-;; slowish
-(test "evalo-backwards-fac-9"
-  (run 1 (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (fac ,q))
-           362880))
-  '(9))
+;; (test "evalo-fac-6"
+;;   (run* (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (fac 6))
+;;            q))
+;;   '(720))
 
-;; remember the quote!
-(test "evalo-backwards-fac-quoted-9"
-  (run* (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (fac ',q))
-           362880))
-  '(9))
+;; ;; slowish
+;; (test "evalo-fac-9"
+;;   (run* (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (fac 9))
+;;            q))
+;;   '(362880))
 
+;; (test "evalo-backwards-fac-6"
+;;   (run 1 (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (fac ,q))
+;;            720))
+;;   '(6))
 
-;; slowish
-(test "evalo-fac-table"
-  (run* (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- n 1))))))))
-              (list
-               (fac 0)
-               (fac 1)
-               (fac 2)
-               (fac 3)))
-           q))
-  '((1 1 2 6)))
-
-(test "evalo-fac-synthesis-hole-0"
-  (run* (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) ',q
-                                (* n (fac (- n 1))))))))
-              (list
-               (fac 0)
-               (fac 1)
-               (fac 2)
-               (fac 3)))
-           '(1 1 2 6)))
-  '(1))
-
-(test "evalo-fac-synthesis-hole-1"
-  (run 1 (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (,q (- n 1))))))))
-              (list
-               (fac 0)
-               (fac 1)
-               (fac 2)
-               (fac 3)))
-           '(1 1 2 6)))
-  '(fac))
-
-;; takes a while
-(test "evalo-fac-synthesis-hole-1-reversed-examples"
-  (run 1 (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (,q (- n 1))))))))
-              (list
-               (fac 3)
-               (fac 2)
-               (fac 1)
-               (fac 0)))
-           '(6 2 1 1)))
-  '(fac))
-
-(test "evalo-fac-synthesis-hole-2"
-  (run 1 (q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (- ,q 1))))))))
-              (list
-               (fac 0)
-               (fac 1)
-               (fac 2)
-               (fac 3)))
-           '(1 1 2 6)))
-  '(n))
-
-(test "evalo-fac-synthesis-hole-3"
-  (run 1 (q)
-    (fresh (r s)
-      (== (list r s) q)
-      (evalo `(letrec ((fac
-                        (lambda (n)
-                          (if (< n 0) #f
-                              (if (= n 0) 1
-                                  (* n (fac (- ,r ,s))))))))
-                (list
-                 (fac 0)
-                 (fac 1)
-                 (fac 2)
-                 (fac 3)))
-             '(1 1 2 6))))
-  '((n 1)))
-
-;; slow, even with the 'symbolo' constraint on 'q'
-(test "evalo-fac-synthesis-hole-4"
-  (run 1 (q)
-    (symbolo q)
-    (evalo `(letrec ((fac
-                      (lambda (n)
-                        (if (< n 0) #f
-                            (if (= n 0) 1
-                                (* n (fac (,q n 1))))))))
-              (list
-               (fac 0)
-               (fac 1)
-               (fac 2)
-               (fac 3)))
-           '(1 1 2 6)))
-  '(-))
+;; ;; remember the quote!
+;; (test "evalo-backwards-fac-quoted-6"
+;;   (run* (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (fac ',q))
+;;            720))
+;;   '(6))
 
 
-(test "evalo-division-using-multiplication-0"
-  (run* (q)
-    (evalo `(* 3 ',q) 6))
-  '(2))
+;; ;; slowish
+;; (test "evalo-backwards-fac-9"
+;;   (run 1 (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (fac ,q))
+;;            362880))
+;;   '(9))
 
-(test "evalo-division-using-multiplication-1"
-  (run* (q)
-    (evalo `(* 4 ',q) 6))
-  '())
+;; ;; remember the quote!
+;; (test "evalo-backwards-fac-quoted-9"
+;;   (run* (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (fac ',q))
+;;            362880))
+;;   '(9))
 
-(test "evalo-division-using-multiplication-2"
-  (run* (q)
-    (evalo `(* 3 ',q) 18))
-  '(6))
 
-(test "evalo-many-0"
-  (run* (q)
-    (fresh (x y)
-      (evalo `(* ',x ',y) 6)
-      (== q (list x y))))
-  '((6 1) (1 6) (-1 -6) (-2 -3)
-    (-3 -2) (-6 -1) (2 3) (3 2)))
+;; ;; slowish
+;; (test "evalo-fac-table"
+;;   (run* (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- n 1))))))))
+;;               (list
+;;                (fac 0)
+;;                (fac 1)
+;;                (fac 2)
+;;                (fac 3)))
+;;            q))
+;;   '((1 1 2 6)))
 
-(test "many-1"
-  (run* (q)
-    (fresh (x y)
-      (evalo `(+ (* ',x ',y) (* ',x ',y)) 6)
-      (== q (list x y))))
-  '((3 1) (1 3) (-1 -3) (-3 -1)))
+;; (test "evalo-fac-synthesis-hole-0"
+;;   (run* (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) ',q
+;;                                 (* n (fac (- n 1))))))))
+;;               (list
+;;                (fac 0)
+;;                (fac 1)
+;;                (fac 2)
+;;                (fac 3)))
+;;            '(1 1 2 6)))
+;;   '(1))
 
-(test "many-2"
-  (run* (q)
-    (fresh (x y)
-      (evalo `(* (* ',x ',y) 2) 6)
-      (== q (list x y))))
-  '((3 1) (1 3) (-1 -3) (-3 -1)))
+;; (test "evalo-fac-synthesis-hole-1"
+;;   (run 1 (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (,q (- n 1))))))))
+;;               (list
+;;                (fac 0)
+;;                (fac 1)
+;;                (fac 2)
+;;                (fac 3)))
+;;            '(1 1 2 6)))
+;;   '(fac))
 
-;;; time to get interesting!
+;; ;; takes a while
+;; (test "evalo-fac-synthesis-hole-1-reversed-examples"
+;;   (run 1 (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (,q (- n 1))))))))
+;;               (list
+;;                (fac 3)
+;;                (fac 2)
+;;                (fac 1)
+;;                (fac 0)))
+;;            '(6 2 1 1)))
+;;   '(fac))
+
+;; (test "evalo-fac-synthesis-hole-2"
+;;   (run 1 (q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (- ,q 1))))))))
+;;               (list
+;;                (fac 0)
+;;                (fac 1)
+;;                (fac 2)
+;;                (fac 3)))
+;;            '(1 1 2 6)))
+;;   '(n))
+
+;; (test "evalo-fac-synthesis-hole-3"
+;;   (run 1 (q)
+;;     (fresh (r s)
+;;       (== (list r s) q)
+;;       (evalo `(letrec ((fac
+;;                         (lambda (n)
+;;                           (if (< n 0) #f
+;;                               (if (= n 0) 1
+;;                                   (* n (fac (- ,r ,s))))))))
+;;                 (list
+;;                  (fac 0)
+;;                  (fac 1)
+;;                  (fac 2)
+;;                  (fac 3)))
+;;              '(1 1 2 6))))
+;;   '((n 1)))
+
+;; ;; slow, even with the 'symbolo' constraint on 'q'
+;; (test "evalo-fac-synthesis-hole-4"
+;;   (run 1 (q)
+;;     (symbolo q)
+;;     (evalo `(letrec ((fac
+;;                       (lambda (n)
+;;                         (if (< n 0) #f
+;;                             (if (= n 0) 1
+;;                                 (* n (fac (,q n 1))))))))
+;;               (list
+;;                (fac 0)
+;;                (fac 1)
+;;                (fac 2)
+;;                (fac 3)))
+;;            '(1 1 2 6)))
+;;   '(-))
+
+
+;; (test "evalo-division-using-multiplication-0"
+;;   (run* (q)
+;;     (evalo `(* 3 ',q) 6))
+;;   '(2))
+
+;; (test "evalo-division-using-multiplication-1"
+;;   (run* (q)
+;;     (evalo `(* 4 ',q) 6))
+;;   '())
+
+;; (test "evalo-division-using-multiplication-2"
+;;   (run* (q)
+;;     (evalo `(* 3 ',q) 18))
+;;   '(6))
+
+;; (test "evalo-many-0"
+;;   (run* (q)
+;;     (fresh (x y)
+;;       (evalo `(* ',x ',y) 6)
+;;       (== q (list x y))))
+;;   '((6 1) (1 6) (-1 -6) (-2 -3)
+;;     (-3 -2) (-6 -1) (2 3) (3 2)))
+
+;; (test "many-1"
+;;   (run* (q)
+;;     (fresh (x y)
+;;       (evalo `(+ (* ',x ',y) (* ',x ',y)) 6)
+;;       (== q (list x y))))
+;;   '((3 1) (1 3) (-1 -3) (-3 -1)))
+
+;; (test "many-2"
+;;   (run* (q)
+;;     (fresh (x y)
+;;       (evalo `(* (* ',x ',y) 2) 6)
+;;       (== q (list x y))))
+;;   '((3 1) (1 3) (-1 -3) (-3 -1)))
+
+;; ;;; time to get interesting!
