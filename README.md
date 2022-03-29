@@ -1,4 +1,4 @@
-# clprosette-miniKanren
+# CLP(Rosette)-miniKanren
 A [faster-miniKanren](https://github.com/michaelballantyne/faster-minikanren) variant integrated with Rosette, inspired by [CLP(SMT)-miniKanren](https://github.com/namin/clpsmt-miniKanren).
 
 ## API
