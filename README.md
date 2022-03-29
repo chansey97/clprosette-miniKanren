@@ -49,7 +49,24 @@ CLP(Rosette)-miniKanren is inspired by [CLP(SMT)-miniKanren](https://github.com/
    - These SMT type constraints can interact with each other. In CLP(SMT)-miniKanren, you must use tags to distinguish, which is difficult to write (consider tower of types and coercion).
    - These SMT type constraints can be propagated among variables, which prevents many "unknown constant" error in CLP(SMT)-miniKanren.
    
-2. It can combine Rosette constraints with miniKanren symbolic constraints (e.g. `integero`, `symbolo`, `=/=`, `absento` ) in a meaningful way. (TODO: examples to explain, e.g. constraint promotion)
+2. It can combine Rosette constraints with miniKanren symbolic constraints (e.g. `integero`, `symbolo`, `=/=`, `absento` ) in a meaningful way. For example, the following code diverges in CLP(SMT)-miniKanren, but returns `'()` in CLP(Rosette)-miniKanren.
+
+   ```
+   (define (nevero)
+     (conde
+       [(== 1 2)]
+       [(nevero)]))
+       
+   (run 1 (q)
+     (fresh (a b)
+       (rosette-typeo a r/@integer?)
+       (rosette-asserto `(,r/@= ,a 5))
+       (rosette-typeo b r/@integer?)
+       (rosette-asserto `(,r/@= ,b 5))
+       (=/= a b) ; <-- promote the `=/=` to SMT assert 
+       (nevero)))
+   ;; '()
+   ```
 
 3. Better reification representation. 
 
