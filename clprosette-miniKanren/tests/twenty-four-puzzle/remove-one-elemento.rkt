@@ -74,7 +74,7 @@
            (rosette-typeo n2 r/@integer?)
            (== `(+ ,a1 ,a2) expr)
            (rosette-asserto `(,r/@= ,val (,r/@+ ,n1 ,n2)))
-           (puzzleo a1 num* n1 num*^^)
+           (puzzleo a1 num* n1 num*^^) ; Here the size of num*^^ in unbounded, it reduce refute power and efficiency!
            (puzzleo a2 num*^^ n2 num*^))]
 
         [(fresh (a1 a2 n1 n2 num*^^)
