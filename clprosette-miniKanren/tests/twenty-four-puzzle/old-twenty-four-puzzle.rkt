@@ -1,7 +1,7 @@
 #lang racket
-(require "../mk.rkt")
-(require "../rosette-bridge.rkt")
-(require "../test-check.rkt")
+(require "../../mk.rkt")
+(require "../../rosette-bridge.rkt")
+(require "../../test-check.rkt")
 (printf "old-twenty-four-puzzle.rkt\n")
 
 ;;; Classic 24 math puzzle, as described at:

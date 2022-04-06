@@ -1,8 +1,8 @@
 #lang racket
-(require "../mk.rkt")
-(require "../mk-streaming-interface.rkt")
-(require "../rosette-bridge.rkt")
-(require "../test-check.rkt")
+(require "../../mk.rkt")
+(require "../../mk-streaming-interface.rkt")
+(require "../../rosette-bridge.rkt")
+(require "../../test-check.rkt")
 (printf "twenty-four-puzzle-smart.rkt\n")
 
 (current-solver
