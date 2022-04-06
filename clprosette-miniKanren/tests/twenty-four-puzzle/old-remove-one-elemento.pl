@@ -149,6 +149,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   numbero(N2),
   A1 + A2 = Expr,
   Val #= N1 + N2,
+  % bounds size of NumLsRR for terminate!
   length(NumLs, LenOfNumLs),
   LenOfNumLsR in 0..sup,
   LenOfNumLsRR in 0..sup,
@@ -157,6 +158,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   label([LenOfNumLsR, LenOfNumLsRR]),
   length(NumLsR, LenOfNumLsR),
   length(NumLsRR, LenOfNumLsRR),
+  % 
   puzzleo(A1, NumLs, N1, NumLsRR),
   puzzleo(A2, NumLsRR, N2, NumLsR).
 puzzleo(Expr, NumLs, Val, NumLsR) :-
@@ -164,6 +166,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   numbero(N2),
   A1 - A2 = Expr,
   Val #= N1 - N2,
+  % bounds size of NumLsRR for terminate!
   length(NumLs, LenOfNumLs),
   LenOfNumLsR in 0..sup,
   LenOfNumLsRR in 0..sup,
@@ -172,6 +175,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   label([LenOfNumLsR, LenOfNumLsRR]),
   length(NumLsR, LenOfNumLsR),
   length(NumLsRR, LenOfNumLsRR),
+  %   
   puzzleo(A1, NumLs, N1, NumLsRR),
   puzzleo(A2, NumLsRR, N2, NumLsR).
 puzzleo(Expr, NumLs, Val, NumLsR) :-
@@ -179,6 +183,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   numbero(N2),
   A1 * A2 = Expr,
   Val #= N1 * N2,
+  % bounds size of NumLsRR for terminate!
   length(NumLs, LenOfNumLs),
   LenOfNumLsR in 0..sup,
   LenOfNumLsRR in 0..sup,
@@ -187,6 +192,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   label([LenOfNumLsR, LenOfNumLsRR]),
   length(NumLsR, LenOfNumLsR),
   length(NumLsRR, LenOfNumLsRR),
+  %
   puzzleo(A1, NumLs, N1, NumLsRR),
   puzzleo(A2, NumLsRR, N2, NumLsR).
 puzzleo(Expr, NumLs, Val, NumLsR) :-
@@ -195,6 +201,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   A1 / A2 = Expr,
   %% Val #= N1 / N2,
   0 #= N1 rem N2, Val #= N1 // N2,
+  % bounds size of NumLsRR for terminate!  
   length(NumLs, LenOfNumLs),
   LenOfNumLsR in 0..sup,
   LenOfNumLsRR in 0..sup,
@@ -203,6 +210,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   label([LenOfNumLsR, LenOfNumLsRR]),
   length(NumLsR, LenOfNumLsR),
   length(NumLsRR, LenOfNumLsRR),
+  %
   puzzleo(A1, NumLs, N1, NumLsRR),
   puzzleo(A2, NumLsRR, N2, NumLsR).
 
