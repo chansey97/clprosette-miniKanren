@@ -300,7 +300,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %@ Len = 292.
 
 
-:- set_prolog_flag(answer_write_options, [max_depth(0)]).
+%% :- set_prolog_flag(answer_write_options, [max_depth(0)]).
 
 %% boring!!
 %% test "24-puzzle-b"
