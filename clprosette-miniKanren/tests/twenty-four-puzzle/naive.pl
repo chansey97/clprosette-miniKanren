@@ -220,7 +220,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%    do *not* work!
 %% 2. This version of code including "duplicates" solutions
 %%    (1) when exist cards with the same number, puzzleo will produce duplicate Exprs, i.e. [2,2,3,3], since 2 and 2 can be exchanged
-%%    (2) commutative law is not considered 
+%%    (2) commutative law is not considered (see smart.rkt)
 %%    (3) associativity law is not considered
 %%    (4) other simplifications is not considered, e.g. should we consider `a-(b+c) =?= (a-b)-c` ?
 
