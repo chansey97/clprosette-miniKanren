@@ -1271,6 +1271,9 @@
 
 ;; ---- rosette intermediate layer code ----
 
+(define rosette-delay-check-sat
+  (make-parameter #f))
+
 (define (reify-to-rosette-symbols v st)
   (cond
     ((var? v)
@@ -1309,10 +1312,12 @@
        (lambda (st)
          (solver-clear (current-solver))
          (solver-assert (current-solver) (state-M st))
-         (let ((sol (solver-check (current-solver))))
-           (cond
-             [(sat? sol) st]
-             [else (solver-clear (current-solver)) #f]))
+         (if (rosette-delay-check-sat)
+             st
+             (let ((sol (solver-check (current-solver))))
+               (cond
+                 [(sat? sol) st]
+                 [else (solver-clear (current-solver)) #f])))
          ))
       )))
 
@@ -1499,21 +1504,27 @@
   (lambdag@ (st)
     ((let loop ()
        (lambdag@ (st)
-         (let* ((sol (solver-check (current-solver)))
-                (_ (when (not (sat? sol)) (error 'r/purge "r/purge's solver state must be sat")))
-                (vs (vars-c st))
-                (vs-M (filter (lambda (v) (c-M (lookup-c v st))) vs))
-                (m (map (lambda (v) (list v (c-M (lookup-c v st)))) vs-M))
-                (m (map (lambda (xs) (list (car xs) (evaluate (cadr xs) (complete-solution sol (list (cadr xs)))) )) m))
-                (m (filter (lambda (xs) (not (constant? (cadr xs)))) m)))
-           (let ((st (state-with-scope st (new-scope))))
-             (mplus*
-              (bind*
-               st
-               ;; (state-with-M st '())
-               (add-model m))
-              (bind*
-               st
-               (assert-neg-model m)
-               (loop)))))))
+         (let ((sol (solver-check (current-solver))))
+           (if (not (sat? sol))
+               (if (rosette-delay-check-sat)
+                   #f
+                   (error 'r/purge "r/purge's solver state must be sat"))
+               (let* ((sol (solver-check (current-solver)))
+                      (_ (when (not (sat? sol)) (error 'r/purge "r/purge's solver state must be sat")))
+                      (vs (vars-c st))
+                      (vs-M (filter (lambda (v) (c-M (lookup-c v st))) vs))
+                      (m (map (lambda (v) (list v (c-M (lookup-c v st)))) vs-M))
+                      (m (map (lambda (xs) (list (car xs) (evaluate (cadr xs) (complete-solution sol (list (cadr xs)))) )) m))
+                      (m (filter (lambda (xs) (not (constant? (cadr xs)))) m)))
+                 (let ((st (state-with-scope st (new-scope))))
+                   (mplus*
+                    (bind*
+                     st
+                     ;; (state-with-M st '())
+                     (add-model m))
+                    (bind*
+                     st
+                     (assert-neg-model m)
+                     (loop)))))))
+         ))
      st)))
