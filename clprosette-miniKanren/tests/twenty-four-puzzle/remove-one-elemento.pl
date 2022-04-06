@@ -2,10 +2,14 @@
 
 :- set_prolog_flag(answer_write_options, [max_depth(5)]).
 
+%% optimized version, more in the spirit of 24:
+%% assumes that 'ls' is a list of integers in
+%% *non-decreasing* order.
+
 remove_one_elemento(X, Ls, Out) :-
   [A|D] = Ls ,
-  (   A = X, D = Out
-  ;   dif(A,X), [A|Res] = Out,
+  (   A #= X, D = Out
+  ;   A #< X, [A|Res] = Out,
       remove_one_elemento(X,D,Res)
   ).
 
@@ -26,6 +30,7 @@ remove_one_elemento(X, Ls, Out) :-
 %@ X = 2,
 %@ Out = [1,1,2] ;
 %@ false.
+
 
 numbero(X) :- var(X).
 numbero(X) :- nonvar(X), number(X).
@@ -236,10 +241,9 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%           length(Qs, Len)
 %%         )
 %%        ).
-%@ % 17,772,341 inferences, 1.576 CPU in 1.576 seconds (100% CPU, 11279657 Lips)
+%@ % 335,985,300 inferences, 29.625 CPU in 29.763 seconds (100% CPU, 11341433 Lips)
 %@ Qs = [1+1+9+13,... + ... + 10+12,... + ... + 11,... + ...|...],
-%@ Len = 2425. % significantly improve efficiency (maybe wrong?)
-
+%@ Len = 48175. % compared to naive.pl, remove_one_elemento can improve efficiency.
 
 %% %% test "24-puzzle-a"
 %% ?- time(
@@ -250,9 +254,10 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%         ,length(Qs, Len)
 %%         )
 %%        ).
-%@ % 14,975,620 inferences, 1.420 CPU in 1.433 seconds (99% CPU, 10549115 Lips)
+%@ % 15,270,755 inferences, 1.466 CPU in 1.461 seconds (100% CPU, 10413705 Lips)
 %@ Qs = [(1+1+1)*8,(1+(... + ...))*8,8*(... + ...),... * ...],
 %@ Len = 4.
+
 
 %% test "24-puzzle-g"
 %% ?- time(
@@ -263,7 +268,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%         , length(Qs, Len)
 %%         )
 %%        ).
-%@ % 18,424,182 inferences, 1.778 CPU in 1.778 seconds (100% CPU, 10359910 Lips)
+%@ % 18,126,153 inferences, 1.700 CPU in 1.736 seconds (98% CPU, 10659866 Lips)
 %@ Qs = [2+2+10+10,... + ... + 2+10,... + ... + 2,... + ...|...],
 %@ Len = 36.
 
@@ -276,9 +281,10 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%         , length(Qs, Len)
 %%         )
 %%        ).
-%@ % 14,829,286 inferences, 1.404 CPU in 1.407 seconds (100% CPU, 10562102 Lips)
+%@ % 15,220,117 inferences, 1.420 CPU in 1.453 seconds (98% CPU, 10721344 Lips)
 %@ Qs = [2*12-2+2,... * ... - 2+2,... - ... + ... * ...,... + ...|...],
 %@ Len = 84.
+
 
 %% test "24-puzzle-i"
 %% ?- time(
@@ -289,7 +295,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%         , length(Qs, Len)
 %%         )
 %%        ).
-%@ % 32,632,039 inferences, 3.089 CPU in 3.137 seconds (98% CPU, 10564565 Lips)
+%@ % 33,227,109 inferences, 3.214 CPU in 3.204 seconds (100% CPU, 10339462 Lips)
 %@ Qs = [4+6+7+7,... + ... + 6+7,... + ... + 6,... + ...|...],
 %@ Len = 146.
 
@@ -317,7 +323,7 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%               )
 %%         )
 %%        ).
-%@ % 28,201 inferences, 0.000 CPU in 0.005 seconds (0% CPU, Infinite Lips)
+%@ % 11,010 inferences, 0.000 CPU in 0.001 seconds (0% CPU, Infinite Lips)
 %@ Qs = [[... + ... + 9+13,[1|...]]].
 
 %% test "24-puzzle-c"
