@@ -207,11 +207,6 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
   puzzleo(A2, NumLsRR, N2, NumLsR).
 
 
-%% The 77928 is equivalent to:
-%% 1. generate 7680 expressions, whish is num-of-exps(4,4)
-%% 2. generate 1820 4-cards-tuples , which is C(52,4)＝270725, then remove duplicates = 1820
-%% 3. eval each expression by 4-cards-tuples as environment, then check the result == 24
-
 %% N.B.
 %% 1. This version of code is restricted to integer values, which means solutions like
 %%    8/(3-(8/3))
@@ -219,10 +214,9 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%    = 24
 %%    do *not* work!
 %% 2. This version of code including "duplicates" solutions
-%%    (1) when exist cards with the same number, puzzleo will produce duplicate Exprs, i.e. [2,2,3,3], since 2 and 2 can be exchanged
-%%    (2) commutative law is not considered 
-%%    (3) associativity law is not considered
-%%    (4) other simplifications is not considered, e.g. should we consider `a-(b+c) =?= (a-b)-c` ?
+%%    (1) commutative law is not considered 
+%%    (2) associativity law is not considered
+%%    (3) other simplifications is not considered, e.g. should we consider `a-(b+c) =?= (a-b)-c` ?
 
 %% ?- time(
 %%         (   
