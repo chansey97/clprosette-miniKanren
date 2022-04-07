@@ -28,7 +28,7 @@ deleteo(Y,[X|Xs],[X|Xt]) :- deleteo(Y,Xs,Xt).
 %@ false.
 
 numbero(X) :- var(X).
-numbero(X) :- nonvar(X), number(X).
+numbero(X) :- nonvar(X), number(X). %% problem? when X is a expression?
 
 expro(Expr, NumLs, NumLsR) :-  
   numbero(Expr),
@@ -369,7 +369,12 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%                          ,N3 in 1..sup
 %%                          ,N4 in 1..sup
 %%                          ,[N1,N2,N3,N4] = NumLs
-%%                          , ??? = E   % <--- TODO:  How unify operator term in Prolog?
+%%                          ,member(Op1, [(+), (-), (*), (/)])
+%%                          ,member(Op2, [(+), (-), (*), (/)])
+%%                          ,member(Op3, [(+), (-), (*), (/)])
+%%                          ,E5 =.. [Op2,E1,E2]
+%%                          ,E6 =.. [Op3,E3,E4]
+%%                          ,E =.. [Op1,E5,E6]
 %%                          ,puzzleo(E, NumLs, 24, [])
 %%                          ,label(NumLs)
 %%                          )
@@ -377,83 +382,59 @@ puzzleo(Expr, NumLs, Val, NumLsR) :-
 %%               )
 %%         )
 %%        ).
+%@ % 789,395 inferences, 0.062 CPU in 0.066 seconds (95% CPU, 12650480 Lips)
+%@ Qs = [1+1+(1+21),1+1+(2+20),... + ... + (... + ...),... + ...|...].
 
 
-%% ;; (test "24-puzzle-d"
-%% ;;   (run 10 (e)
-%% ;;     (fresh (num* n1 n2 n3 n4 op1 op2 op3 e1 e2 e3 e4)
-%% ;;       (rosette-typeo n1 r/@integer?)
-%% ;;       (rosette-typeo n2 r/@integer?)
-%% ;;       (rosette-typeo n3 r/@integer?)
-%% ;;       (rosette-typeo n4 r/@integer?)
-%% ;;       (rosette-asserto `(,r/@< 0 ,n1))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n2))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n3))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n4))
-%% ;;       (== `(,n1 ,n2 ,n3 ,n4) num*)
-%% ;;       (== `(,op1 (,op2 ,e1 ,e2) (,op3 ,e3 ,e4)) e)
-%% ;;       (puzzleo e num* 24 '())))
-%% ;;   '((+ (+ 21 1) (+ 1 1))
-%% ;;     (+ (+ 18 2) (+ 2 2))
-%% ;;     (+ (+ 15 3) (+ 3 3))
-%% ;;     (+ (+ 12 4) (+ 4 4))
-%% ;;     (+ (+ 16 3) (+ 3 2))
-%% ;;     (+ (+ 14 5) (+ 3 2))
-%% ;;     (+ (+ 13 6) (+ 3 2))
-%% ;;     (+ (+ 15 3) (+ 4 2))
-%% ;;     (+ (+ 14 3) (+ 5 2))
-%% ;;     (+ (+ 13 5) (+ 4 2))))
+%% test "24-puzzle-e"
 
-%% ;; (test "24-puzzle-e"
-%% ;;   (run 10 (e)
-%% ;;     (fresh (num* n1 n2 n3 n4 op e1 e2)
-%% ;;       (rosette-typeo n1 r/@integer?)
-%% ;;       (rosette-typeo n2 r/@integer?)
-%% ;;       (rosette-typeo n3 r/@integer?)
-%% ;;       (rosette-typeo n4 r/@integer?)
-%% ;;       (rosette-asserto `(,r/@< 0 ,n1))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n2))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n3))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n4))
-%% ;;       (== `(,n1 ,n2 ,n3 ,n4) num*)
-%% ;;       (=/= op '+)
-%% ;;       (== `(,op ,e1 ,e2) e)
-%% ;;       (puzzleo e num* 24 '())))
-%% ;;   '((- 27 (+ 1 (+ 1 1)))
-%% ;;     (- 30 (+ 2 (+ 2 2)))
-%% ;;     (- 33 (+ 3 (+ 3 3)))
-%% ;;     (- 36 (+ 4 (+ 4 4)))
-%% ;;     (- 32 (+ 3 (+ 3 2)))
-%% ;;     (- 34 (+ 5 (+ 3 2)))
-%% ;;     (- 35 (+ 6 (+ 3 2)))
-%% ;;     (- 33 (+ 3 (+ 4 2)))
-%% ;;     (- 34 (+ 3 (+ 5 2)))
-%% ;;     (- 35 (+ 5 (+ 4 2)))))
-
-%% ;; (test "24-puzzle-f"
-%% ;;   (run 10 (e)
-%% ;;     (fresh (num* n1 n2 n3 n4 op e1 e2)
-%% ;;       (rosette-typeo n1 r/@integer?)
-%% ;;       (rosette-typeo n2 r/@integer?)
-%% ;;       (rosette-typeo n3 r/@integer?)
-%% ;;       (rosette-typeo n4 r/@integer?)
-%% ;;       (rosette-asserto `(,r/@< 0 ,n1))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n2))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n3))
-%% ;;       (rosette-asserto `(,r/@< 0 ,n4))
-%% ;;       (== `(,n1 ,n2 ,n3 ,n4) num*)
-%% ;;       (== op '*)
-%% ;;       (== `(,op ,e1 ,e2) e)
-%% ;;       (puzzleo e num* 24 '())))
-%% ;;   '((* 2 (+ 2 (+ 4 6)))
-%% ;;     (* 1 (+ 8 (+ 12 4)))
-%% ;;     (* 3 (+ 1 (+ 4 3)))
-%% ;;     (* 6 (+ 2 (+ 1 1)))
-%% ;;     (* 1 (+ 16 (+ 1 7)))
-%% ;;     (* 1 (+ 16 (+ 5 3)))
-%% ;;     (* 1 (+ 2 (+ 16 6)))
-%% ;;     (* 1 (+ 16 (+ 4 4)))
-%% ;;     (* 2 (+ 3 (+ 8 1)))
-%% ;;     (* 1 (+ 16 (+ 2 6)))))
+%% TODO: why use ... sup will complain Arguments are not sufficiently instantiated? (and no problem if just use (+) (*))
+%% ?- time(
+%%         (   
+%%           once(
+%%                findnsols(10
+%%                         ,E
+%%                         ,(
+%%                           N1 in 1..13
+%%                          ,N2 in 1..13
+%%                          ,N3 in 1..13
+%%                          ,N4 in 1..13
+%%                          ,[N1,N2,N3,N4] = NumLs
+%%                          ,member(Op, [(-), (*), (/)])
+%%                          ,E =.. [Op,E1,E2]                     
+%%                          ,puzzleo(E, NumLs, 24, [])
+%%                          ,label(NumLs)
+%%                          )
+%%                         ,Qs) 
+%%               )
+%%         )
+%%        ).
+%@ % 12,973 inferences, 0.000 CPU in 0.001 seconds (0% CPU, Infinite Lips)
+%@ Qs = [1+11+13-1,... + ... + 12-1,... + ... - 2,... - ...|...].
 
 
+
+%% test "24-puzzle-f"
+
+%% ?- time(
+%%         (   
+%%           once(
+%%                findnsols(10
+%%                         ,E
+%%                         ,(
+%%                           N1 in 1..sup
+%%                          ,N2 in 1..sup
+%%                          ,N3 in 1..sup
+%%                          ,N4 in 1..sup
+%%                          ,[N1,N2,N3,N4] = NumLs
+%%                          ,member(Op, [(*)])
+%%                          ,E =.. [Op,E1,E2]                     
+%%                          ,puzzleo(E, NumLs, 24, [])
+%%                          ,label(NumLs)
+%%                          )
+%%                         ,Qs) 
+%%               )
+%%         )
+%%        ).
+%@ % 27,364 inferences, 0.016 CPU in 0.003 seconds (520% CPU, 1754091 Lips)
+%@ Qs = [(1+1+1)*8,(... + ... + 2)*6,(... + ...)*4,... * ...|...].
